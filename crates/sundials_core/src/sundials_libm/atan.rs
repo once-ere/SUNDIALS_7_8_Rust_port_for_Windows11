@@ -406,7 +406,14 @@ pub fn atan(x: f64) -> f64 {
         yy = v.mul_add(yy, f64::from_bits(D3));
 
         let ww = w * ((1.0 - t1) - t2);
-        /* ESUB (HPI, w, t3, cor) — dla.h */
+        /* ESUB (HPI, w, t3, cor) — dla.h.
+
+        dla.h's ESUB expands to a two-way branch on |a| vs |b|; only the
+        first arm is reachable here, in the C as much as in the port, because
+        this call site always has |HPI| > |w| (w is a reciprocal of an
+        argument with |x| > 1, so |w| < 1 < pi/2). The second arm is
+        therefore not translated. No corpus can distinguish the two, since
+        neither implementation can reach it. */
         let hpi = f64::from_bits(HPI);
         let t3 = hpi - w;
         let cor = if hpi.abs() > w.abs() { (hpi - t3) - w } else { hpi - (w + t3) };

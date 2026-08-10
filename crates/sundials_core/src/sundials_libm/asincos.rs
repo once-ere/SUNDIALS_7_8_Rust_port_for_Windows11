@@ -100,7 +100,17 @@ fn f_poly(z: f64) -> f64 {
 fn sqrt_kernel(z: f64) -> (f64, f64) {
     /* v.x = z; k = v.i[HIGH_HALF]; */
     let k = (z.to_bits() >> 32) as u32 as i32;
-    /* t = inroot[(k&0x001fffff)>>14]*powtwo[511-(k>>21)]; */
+    /* t = inroot[(k&0x001fffff)>>14]*powtwo[511-(k>>21)];
+
+    Index range note. `POWTWO` has 28 entries and `511 - (k >> 21)` reaches
+    27 exactly — no headroom — for the smallest `z` this kernel is ever
+    called with. That is the C's behaviour too, but the failure modes differ:
+    an out-of-range index is undefined behaviour in C and a panic in Rust. So
+    the guard is the caller's, in both languages: `sqrt_kernel` is only
+    entered from the |x| > 0.5 arms, where `z = (1 - |x|) / 2` is bounded
+    below, and the exact-1.0 and |x| > 1 cases return before reaching it.
+    Do not relax those guards without re-checking this bound; the corpus now
+    includes +-1, +-(1+1ulp) and +-2, which exercise every one of them. */
     let mut t = f64::from_bits(INROOT[((k & 0x001f_ffff) >> 14) as usize])
         * f64::from_bits(POWTWO[(511 - (k >> 21)) as usize]);
     /* r = 1.0 - t*t*z  — the outer (t*t)*z contracts into the subtract. */

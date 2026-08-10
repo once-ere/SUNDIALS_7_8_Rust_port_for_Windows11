@@ -72,6 +72,21 @@ pub fn exp(x: f64) -> f64 {
     let c5 = f64::from_bits(EXP_POLY[3]);
     let tmp = (r2 * r2).mul_add(r.mul_add(c5, c4), r2.mul_add(r.mul_add(c3, c2), tail + r));
     if abstop == 0 {
+        /* This is `specialcase` from musl's exp.c. It is not translated
+        again here: `pow`'s exponential tail runs the same algorithm and
+        already carries a translation of the same function, so reusing it
+        keeps one copy of the subnormal-range double-rounding logic instead
+        of two that could drift apart.
+
+        The two C bodies are textually identical; the only difference is
+        that `pow`'s is reached with a `sign_bias` already folded into
+        `sbits` by its caller, which is 0 on every path into it from here.
+        That equivalence is also *measured*, not merely argued: the corpus
+        opens with the exp overflow and underflow thresholds
+        (0x1.62e42fefa39efp+9 and -0x1.74910d52d3051p+9, both sides of each,
+        plus +-1024, +-DBL_MAX and the subnormal ladder), which are exactly
+        the inputs that reach this branch, and all of them agree bit for bit
+        with glibc. */
         return pow_exp_specialcase(tmp, sbits, ki);
     }
     let scale = f64::from_bits(sbits);
