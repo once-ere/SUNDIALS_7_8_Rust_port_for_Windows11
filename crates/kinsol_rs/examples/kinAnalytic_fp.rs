@@ -20,6 +20,7 @@
 use std::any::Any;
 
 use kinsol_rs::prelude::*;
+use kinsol_rs::sundials_libm;
 
 /* problem constants */
 const NEQ: sunindextype = 3; /* number of equations */
@@ -327,9 +328,9 @@ fn FPFunction(u: &N_Vector, g: &N_Vector, _user_data: &mut Option<Box<dyn Any>>)
     let y = udata[1];
     let z = udata[2];
 
-    gdata[0] = (ONE / THREE) * ((y - ONE) * z).cos() + (ONE / SIX);
-    gdata[1] = (ONE / NINE) * (x * x + z.sin() + ONEPTZEROSIX).sqrt() + PTNINE;
-    gdata[2] = -(ONE / TWENTY) * (-x * (y - ONE)).exp() - (TEN * PI - THREE) / SIXTY;
+    gdata[0] = (ONE / THREE) * sundials_libm::cos((y - ONE) * z) + (ONE / SIX);
+    gdata[1] = (ONE / NINE) * (x * x + sundials_libm::sin(z) + ONEPTZEROSIX).sqrt() + PTNINE;
+    gdata[2] = -(ONE / TWENTY) * sundials_libm::exp(-x * (y - ONE)) - (TEN * PI - THREE) / SIXTY;
 
     0
 }

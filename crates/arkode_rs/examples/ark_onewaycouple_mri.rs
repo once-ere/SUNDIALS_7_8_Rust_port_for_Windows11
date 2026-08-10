@@ -30,6 +30,7 @@ use std::fs::File;
 use std::io::Write;
 
 use arkode_rs::prelude::*;
+use arkode_rs::sundials_libm;
 
 /* C macro `NV_Ith_S(v,i)` (0-based). The RefMut guard lives only for the
 statement that uses it, per the workspace granular-borrow rule. */
@@ -326,12 +327,12 @@ fn ans(t: sunrealtype, ytrue: &N_Vector) -> i32 {
     let c4: sunrealtype = 51.0 / 2501.0;
 
     /* fill in the solution vector */
-    NV_Ith_S_set(ytrue, 0, (c1 * t).cos());
-    NV_Ith_S_set(ytrue, 1, (c1 * t).sin());
+    NV_Ith_S_set(ytrue, 0, sundials_libm::cos(c1 * t));
+    NV_Ith_S_set(ytrue, 1, sundials_libm::sin(c1 * t));
     NV_Ith_S_set(
         ytrue,
         2,
-        c2 * (-t).exp() - c3 * (c1 * t).cos() + c4 * (c1 * t).sin(),
+        c2 * sundials_libm::exp(-t) - c3 * sundials_libm::cos(c1 * t) + c4 * sundials_libm::sin(c1 * t),
     );
 
     /* Return with success */

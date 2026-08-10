@@ -68,6 +68,7 @@ use arkode_rs::prelude::*;
 use std::any::Any;
 use std::fs::File;
 use std::io::Write;
+use arkode_rs::sundials_libm;
 
 const ZERO: sunrealtype = 0.0;
 const ONE: sunrealtype = 1.0;
@@ -1271,21 +1272,21 @@ fn Jf(
  * ------------------------------*/
 
 fn r(t: sunrealtype, _user_data: &[sunrealtype; 3]) -> sunrealtype {
-    0.5 * t.cos()
+    0.5 * sundials_libm::cos(t)
 }
 
 fn s(t: sunrealtype, user_data: &[sunrealtype; 3]) -> sunrealtype {
     let rpar = user_data;
-    (rpar[1] * t).cos()
+    sundials_libm::cos(rpar[1] * t)
 }
 
 fn rdot(t: sunrealtype, _user_data: &[sunrealtype; 3]) -> sunrealtype {
-    -0.5 * t.sin()
+    -0.5 * sundials_libm::sin(t)
 }
 
 fn sdot(t: sunrealtype, user_data: &[sunrealtype; 3]) -> sunrealtype {
     let rpar = user_data;
-    -rpar[1] * (rpar[1] * t).sin()
+    -rpar[1] * sundials_libm::sin(rpar[1] * t)
 }
 
 fn utrue(t: sunrealtype, user_data: &[sunrealtype; 3]) -> sunrealtype {

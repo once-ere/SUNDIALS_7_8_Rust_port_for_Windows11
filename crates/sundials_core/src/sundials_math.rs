@@ -42,7 +42,7 @@ pub fn SUNRabs(x: sunrealtype) -> sunrealtype {
 
 /// C macro `SUNRexp(x)`: `exp(x)`.
 pub fn SUNRexp(x: sunrealtype) -> sunrealtype {
-    x.exp()
+    crate::sundials_libm::exp(x)
 }
 
 /// C macro `SUNRceil(x)`: `ceil(x)`.

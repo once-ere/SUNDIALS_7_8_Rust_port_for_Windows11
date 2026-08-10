@@ -42,13 +42,14 @@ use arkode_rs::prelude::*;
 use std::any::Any;
 use std::fs::File;
 use std::io::Write;
+use arkode_rs::sundials_libm;
 
 /* Value of the natural number e */
 const EVAL: sunrealtype = 2.718281828459045235360287471352662497757247093699959574966;
 
 /* Convince macros for calling precision-specific math functions */
 fn EXP(x: sunrealtype) -> sunrealtype {
-    x.exp()
+    sundials_libm::exp(x)
 }
 
 fn SQRT(x: sunrealtype) -> sunrealtype {
@@ -56,7 +57,7 @@ fn SQRT(x: sunrealtype) -> sunrealtype {
 }
 
 fn LOG(x: sunrealtype) -> sunrealtype {
-    x.ln()
+    sundials_libm::log(x)
 }
 
 /* C `atoi` (strtol semantics): longest valid leading integer, 0 otherwise */

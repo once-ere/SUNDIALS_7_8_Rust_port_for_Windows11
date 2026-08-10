@@ -37,6 +37,7 @@ use std::any::Any;
 
 use ida_rs::prelude::*;
 use ida_rs::sundials_dense::{SUNDlsMat_denseGETRF, SUNDlsMat_denseGETRS};
+use ida_rs::sundials_libm;
 
 /* helpful macros */
 
@@ -845,7 +846,7 @@ fn WebRates(
         );
     }
 
-    let fac = ONE + ALPHA * xx * yy + BETA * (FOURPI * xx).sin() * (FOURPI * yy).sin();
+    let fac = ONE + ALPHA * xx * yy + BETA * sundials_libm::sin(FOURPI * xx) * sundials_libm::sin(FOURPI * yy);
 
     for is in 0..NUM_SPECIES {
         ratesxy[is] = cxy[is] * (bcoef[is] * fac + ratesxy[is]);

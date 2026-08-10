@@ -79,22 +79,22 @@ pub const SIX: sunrealtype = 6.0;
 
 /// C `SUNRlog(x)` = `log(x)` in double precision.
 pub fn SUNRlog(x: sunrealtype) -> sunrealtype {
-    x.ln()
+    crate::sundials_libm::log(x)
 }
 
 /// C `SUNRsinh(x)` = `sinh(x)` in double precision.
 pub fn SUNRsinh(x: sunrealtype) -> sunrealtype {
-    x.sinh()
+    crate::sundials_libm::sinh(x)
 }
 
 /// C `SUNRcosh(x)` = `cosh(x)` in double precision.
 pub fn SUNRcosh(x: sunrealtype) -> sunrealtype {
-    x.cosh()
+    crate::sundials_libm::cosh(x)
 }
 
 /// C `SUNRacosh(x)` = `acosh(x)` in double precision.
 pub fn SUNRacosh(x: sunrealtype) -> sunrealtype {
-    x.acosh()
+    crate::sundials_libm::acosh(x)
 }
 
 /*===============================================================

@@ -58,6 +58,7 @@
 use arkode_rs::prelude::*;
 
 use std::any::Any;
+use arkode_rs::sundials_libm;
 
 /* ark_kepler.h */
 
@@ -805,19 +806,19 @@ fn main() {
             con_errors[i] = SUNRabs(result.energy_error);
 
             a11 += 1.0;
-            a12 += dts[i].ln();
-            a21 += dts[i].ln();
-            a22 += dts[i].ln() * dts[i].ln();
-            b1 += acc_errors[i].ln();
-            b2 += acc_errors[i].ln() * dts[i].ln();
-            b1e += con_errors[i].ln();
-            b2e += con_errors[i].ln() * dts[i].ln();
+            a12 += sundials_libm::log(dts[i]);
+            a21 += sundials_libm::log(dts[i]);
+            a22 += sundials_libm::log(dts[i]) * sundials_libm::log(dts[i]);
+            b1 += sundials_libm::log(acc_errors[i]);
+            b2 += sundials_libm::log(acc_errors[i]) * sundials_libm::log(dts[i]);
+            b1e += sundials_libm::log(con_errors[i]);
+            b2e += sundials_libm::log(con_errors[i]) * sundials_libm::log(dts[i]);
 
             if i >= 1 {
                 acc_orders[i - 1] =
-                    (acc_errors[i] / acc_errors[i - 1]).ln() / (dts[i] / dts[i - 1]).ln();
+                    sundials_libm::log(acc_errors[i] / acc_errors[i - 1]) / sundials_libm::log(dts[i] / dts[i - 1]);
                 con_orders[i - 1] =
-                    (con_errors[i] / con_errors[i - 1]).ln() / (dts[i] / dts[i - 1]).ln();
+                    sundials_libm::log(con_errors[i] / con_errors[i - 1]) / sundials_libm::log(dts[i] / dts[i - 1]);
             }
 
             i += 1;

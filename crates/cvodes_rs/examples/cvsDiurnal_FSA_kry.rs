@@ -53,6 +53,7 @@ use cvodes_rs::sundials_direct::dls_cols;
 use std::any::Any;
 use std::cell::RefCell;
 use std::rc::Rc;
+use cvodes_rs::sundials_libm;
 
 /* helpful macros */
 
@@ -410,11 +411,11 @@ fn f(t: sunrealtype, y: &N_Vector, ydot: &N_Vector, user_data: &mut Option<Box<d
 
     /* Set diurnal rate coefficients. */
 
-    let s = (data.om * t).sin();
+    let s = sundials_libm::sin(data.om * t);
     let q3;
     if s > ZERO {
-        q3 = (-A3 / s).exp();
-        data.q4 = (-A4 / s).exp();
+        q3 = sundials_libm::exp(-A3 / s);
+        data.q4 = sundials_libm::exp(-A4 / s);
     } else {
         q3 = ZERO;
         data.q4 = ZERO;
@@ -435,8 +436,8 @@ fn f(t: sunrealtype, y: &N_Vector, ydot: &N_Vector, user_data: &mut Option<Box<d
 
         let zdn = ZMIN + (jz as sunrealtype - 0.5) * delz;
         let zup = zdn + delz;
-        let czdn = verdco * (0.2 * zdn).exp();
-        let czup = verdco * (0.2 * zup).exp();
+        let czdn = verdco * sundials_libm::exp(0.2 * zdn);
+        let czup = verdco * sundials_libm::exp(0.2 * zup);
         let idn: i32 = if jz == 0 { 1 } else { -1 };
         let iup: i32 = if jz == MZ - 1 { -1 } else { 1 };
         for jx in 0..MX {
@@ -544,8 +545,8 @@ fn Precond(
         for jz in 0..MZ {
             let zdn = ZMIN + (jz as sunrealtype - 0.5) * delz;
             let zup = zdn + delz;
-            let czdn = verdco * (0.2 * zdn).exp();
-            let czup = verdco * (0.2 * zup).exp();
+            let czdn = verdco * sundials_libm::exp(0.2 * zdn);
+            let czup = verdco * sundials_libm::exp(0.2 * zup);
             let diag = -(czdn + czup + 2.0 * hordco);
             for jx in 0..MX {
                 let c1 = ydata[IJKth(1, jx, jz)];

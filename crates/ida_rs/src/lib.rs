@@ -96,6 +96,7 @@ pub use sundials_core::sundials_hashmap;
 pub use sundials_core::sundials_iterative;
 pub use sundials_core::sundials_linearsolver;
 pub use sundials_core::sundials_logger;
+pub use sundials_core::sundials_libm;
 pub use sundials_core::sundials_math;
 pub use sundials_core::sundials_matrix;
 pub use sundials_core::sundials_memory;

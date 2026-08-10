@@ -25,6 +25,7 @@ use cvode_rs::prelude::*;
 use std::any::Any;
 use std::fs::File;
 use std::io::Write;
+use cvode_rs::sundials_libm;
 
 /* Problem Constants */
 const ZERO: sunrealtype = 0.0;
@@ -482,10 +483,10 @@ fn RefSol(tf: sunrealtype, yref: &N_Vector, nout: i32, sunctx: &SUNContext) -> i
             FID,
             "{} {} {} {} {}\n",
             fmt_ew(ZERO, 24, 16),
-            fmt_ew(th.cos(), 24, 16),
-            fmt_ew(th.sin(), 24, 16),
-            fmt_ew(-thd * th.sin(), 24, 16),
-            fmt_ew(thd * th.cos(), 24, 16)
+            fmt_ew(sundials_libm::cos(th), 24, 16),
+            fmt_ew(sundials_libm::sin(th), 24, 16),
+            fmt_ew(-thd * sundials_libm::sin(th), 24, 16),
+            fmt_ew(thd * sundials_libm::cos(th), 24, 16)
         );
     }
 
@@ -526,10 +527,10 @@ fn RefSol(tf: sunrealtype, yref: &N_Vector, nout: i32, sunctx: &SUNContext) -> i
                 FID,
                 "{} {} {} {} {}\n",
                 fmt_ew(t, 24, 16),
-                fmt_ew(th.cos(), 24, 16),
-                fmt_ew(th.sin(), 24, 16),
-                fmt_ew(-thd * th.sin(), 24, 16),
-                fmt_ew(thd * th.cos(), 24, 16)
+                fmt_ew(sundials_libm::cos(th), 24, 16),
+                fmt_ew(sundials_libm::sin(th), 24, 16),
+                fmt_ew(-thd * sundials_libm::sin(th), 24, 16),
+                fmt_ew(thd * sundials_libm::cos(th), 24, 16)
             );
         }
 
@@ -554,10 +555,10 @@ fn RefSol(tf: sunrealtype, yref: &N_Vector, nout: i32, sunctx: &SUNContext) -> i
     {
         let mut yydata = N_VGetArrayPointer(yref).expect("vector data");
 
-        yydata[0] = th.cos();
-        yydata[1] = th.sin();
-        yydata[2] = -thd * th.sin();
-        yydata[3] = thd * th.cos();
+        yydata[0] = sundials_libm::cos(th);
+        yydata[1] = sundials_libm::sin(th);
+        yydata[2] = -thd * sundials_libm::sin(th);
+        yydata[3] = thd * sundials_libm::cos(th);
     }
 
     /* Free memory */
@@ -580,7 +581,7 @@ fn fref(_t: sunrealtype, yy: &N_Vector, fy: &N_Vector, _f_data: &mut Option<Box<
     let mut fydata = N_VGetArrayPointer(fy).expect("vector data");
 
     fydata[0] = yydata[1]; /* theta'          */
-    fydata[1] = -GRAV * (yydata[0]).cos(); /* -g * cos(theta) */
+    fydata[1] = -GRAV * sundials_libm::cos(yydata[0]); /* -g * cos(theta) */
     0
 }
 

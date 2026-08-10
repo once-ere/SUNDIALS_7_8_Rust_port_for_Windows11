@@ -36,6 +36,7 @@ use arkode_rs::prelude::*;
 use arkode_rs::sundials_futils::SUNFileClose;
 use std::any::Any;
 use std::cell::RefCell;
+use arkode_rs::sundials_libm;
 
 /* -----------------------------------------------------------------
  * C library `rand()` / `RAND_MAX`.
@@ -364,9 +365,9 @@ fn f(t: sunrealtype, y: &N_Vector, ydot: &N_Vector, user_data: &mut Option<Box<d
     let u = NV_DATA_S(y)[0]; /* access current solution value */
 
     /* fill in the RHS function: "N_VGetArrayPointer" accesses the 0th entry of ydot */
-    NV_DATA_S(ydot)[0] = (lambda - alpha * (((10.0 - t) / 10.0) * (-1.0f64).acos()).cos()) * u
+    NV_DATA_S(ydot)[0] = (lambda - alpha * sundials_libm::cos(((10.0 - t) / 10.0) * sundials_libm::acos(-1.0f64))) * u
         + 1.0 / (1.0 + t * t)
-        - (lambda - alpha * (((10.0 - t) / 10.0) * (-1.0f64).acos()).cos()) * t.atan();
+        - (lambda - alpha * sundials_libm::cos(((10.0 - t) / 10.0) * sundials_libm::acos(-1.0f64))) * sundials_libm::atan(t);
 
     0 /* return with success */
 }
@@ -418,7 +419,7 @@ fn check_flag(flagvalue: Option<i32>, funcname: &str, opt: i32) -> i32 {
 /* check the computed solution */
 fn check_ans(y: &N_Vector, t: sunrealtype, rtol: sunrealtype, atol: sunrealtype) -> i32 {
     /* compute solution error */
-    let ans = t.atan();
+    let ans = sundials_libm::atan(t);
     let ewt = 1.0 / (rtol * SUNRabs(ans) + atol);
     let err = ewt * SUNRabs(NV_DATA_S(y)[0] - ans);
 
@@ -435,7 +436,7 @@ fn check_ans(y: &N_Vector, t: sunrealtype, rtol: sunrealtype, atol: sunrealtype)
 /* check the error */
 fn compute_error(y: &N_Vector, t: sunrealtype) -> i32 {
     /* compute solution error */
-    let ans = t.atan();
+    let ans = sundials_libm::atan(t);
     let err = SUNRabs(NV_DATA_S(y)[0] - ans);
 
     print!("\nACCURACY at the final time   = {}\n", fmt_g(err, 6));

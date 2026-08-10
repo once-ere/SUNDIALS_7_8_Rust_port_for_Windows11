@@ -33,6 +33,7 @@
 use arkode_rs::prelude::*;
 
 use std::any::Any;
+use arkode_rs::sundials_libm;
 
 /* ark_damped_harmonic_symplectic.h */
 
@@ -285,11 +286,11 @@ fn main() {
 }
 
 fn omega(t: sunrealtype) -> sunrealtype {
-    (t / 2.0).cos()
+    sundials_libm::cos(t / 2.0)
 }
 
 fn F(t: sunrealtype) -> sunrealtype {
-    0.018 * (t / PI).sin()
+    0.018 * sundials_libm::sin(t / PI)
 }
 
 fn Hamiltonian(yvec: &N_Vector, t: sunrealtype) -> sunrealtype {
@@ -298,7 +299,7 @@ fn Hamiltonian(yvec: &N_Vector, t: sunrealtype) -> sunrealtype {
     let p: sunrealtype = y[0];
     let q: sunrealtype = y[1];
 
-    H = (p * p * (-F(t)).exp()) / 2.0 + (omega(t) * omega(t) * q * q * F(t).exp()) / 2.0;
+    H = (p * p * sundials_libm::exp(-F(t))) / 2.0 + (omega(t) * omega(t) * q * q * sundials_libm::exp(F(t))) / 2.0;
 
     H
 }
@@ -313,7 +314,7 @@ fn qdot(
     let mut ydot = N_VGetArrayPointer(ydotvec).expect("ydot data");
     let p: sunrealtype = y[0];
 
-    ydot[1] = p * (-F(t)).exp();
+    ydot[1] = p * sundials_libm::exp(-F(t));
 
     0
 }

@@ -39,6 +39,7 @@ use arkode_rs::sundials_futils::SUNFileClose;
 use std::any::Any;
 use std::fs::File;
 use std::io::Write;
+use arkode_rs::sundials_libm;
 
 /* user data structure */
 #[derive(Clone)]
@@ -387,7 +388,7 @@ fn SetInitialCondition(y: &N_Vector, user_data: &UserData) -> i32 {
     /* set initial condition */
     i = 0;
     while i < N {
-        Y[i as usize] = 1.0 / (1.0 + (lam * (i as sunrealtype * dx - 1.0)).exp());
+        Y[i as usize] = 1.0 / (1.0 + sundials_libm::exp(lam * (i as sunrealtype * dx - 1.0)));
         i += 1;
     }
 

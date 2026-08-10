@@ -25,6 +25,7 @@ use arkode_rs::prelude::*;
 
 use arkode_rs::sundials_futils::SUNFileClose;
 use std::any::Any;
+use arkode_rs::sundials_libm;
 
 /* Main Program */
 fn main() {
@@ -206,7 +207,7 @@ fn f(t: sunrealtype, y: &N_Vector, ydot: &N_Vector, user_data: &mut Option<Box<d
     let u = NV_DATA_S(y)[0]; /* access current solution value */
 
     /* fill in the RHS function */
-    NV_DATA_S(ydot)[0] = lambda * u + 1.0 / (1.0 + t * t) - lambda * t.atan();
+    NV_DATA_S(ydot)[0] = lambda * u + 1.0 / (1.0 + t * t) - lambda * sundials_libm::atan(t);
 
     0 /* return with success */
 }
@@ -280,7 +281,7 @@ fn check_flag(flagvalue: Option<i32>, funcname: &str, opt: i32) -> i32 {
 /* check the computed solution */
 fn check_ans(y: &N_Vector, t: sunrealtype, rtol: sunrealtype, atol: sunrealtype) -> i32 {
     /* compute solution error */
-    let ans = t.atan();
+    let ans = sundials_libm::atan(t);
     let ewt = 1.0 / (rtol * SUNRabs(ans) + atol);
     let err = ewt * SUNRabs(NV_DATA_S(y)[0] - ans);
 
@@ -297,7 +298,7 @@ fn check_ans(y: &N_Vector, t: sunrealtype, rtol: sunrealtype, atol: sunrealtype)
 /* check the error */
 fn compute_error(y: &N_Vector, t: sunrealtype) -> i32 {
     /* compute solution error */
-    let ans = t.atan();
+    let ans = sundials_libm::atan(t);
     let err = SUNRabs(NV_DATA_S(y)[0] - ans);
 
     print!("\nACCURACY at the final time   = {}\n", fmt_g(err, 6));

@@ -20,6 +20,7 @@ use cvodes_rs::prelude::*;
 use std::any::Any;
 use std::fs::File;
 use std::io::Write;
+use cvodes_rs::sundials_libm;
 
 /* Problem Constants */
 const PI: sunrealtype = 3.141592653589793238462643383279502884197169;
@@ -468,8 +469,8 @@ fn InputHelp() {
 fn ComputeSolution(t: sunrealtype, y: &N_Vector, udata: &UserData) -> i32 {
     let mut ydata = N_VGetArrayPointer(y).expect("vector data");
 
-    ydata[0] = ((udata.alpha) * t).cos();
-    ydata[1] = ((udata.alpha) * t).sin();
+    ydata[0] = sundials_libm::cos((udata.alpha) * t);
+    ydata[1] = sundials_libm::sin((udata.alpha) * t);
 
     0
 }

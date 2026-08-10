@@ -25,6 +25,7 @@ use cvodes_rs::sundials_dense::{
 use cvodes_rs::sundials_direct::dls_cols;
 
 use std::any::Any;
+use cvodes_rs::sundials_libm;
 
 /* helpful macros */
 
@@ -418,11 +419,11 @@ fn f(t: sunrealtype, u: &N_Vector, udot: &N_Vector, user_data: &mut Option<Box<d
 
     /* Set diurnal rate coefficients. */
 
-    let s = (data.om * t).sin();
+    let s = sundials_libm::sin(data.om * t);
     let q3;
     if s > ZERO {
-        q3 = (-A3 / s).exp();
-        data.q4 = (-A4 / s).exp();
+        q3 = sundials_libm::exp(-A3 / s);
+        data.q4 = sundials_libm::exp(-A4 / s);
     } else {
         q3 = ZERO;
         data.q4 = ZERO;
@@ -443,8 +444,8 @@ fn f(t: sunrealtype, u: &N_Vector, udot: &N_Vector, user_data: &mut Option<Box<d
 
         let ydn = YMIN + (jy as sunrealtype - 0.5) * dely;
         let yup = ydn + dely;
-        let cydn = verdco * (0.2 * ydn).exp();
-        let cyup = verdco * (0.2 * yup).exp();
+        let cydn = verdco * sundials_libm::exp(0.2 * ydn);
+        let cyup = verdco * sundials_libm::exp(0.2 * yup);
         let idn: i32 = if jy == 0 { 1 } else { -1 };
         let iup: i32 = if jy == MY - 1 { -1 } else { 1 };
         for jx in 0..MX {
@@ -513,9 +514,9 @@ fn jtv(
 
     /* Set diurnal rate coefficients. */
 
-    let s = (data.om * t).sin();
+    let s = sundials_libm::sin(data.om * t);
     if s > ZERO {
-        data.q4 = (-A4 / s).exp();
+        data.q4 = sundials_libm::exp(-A4 / s);
     } else {
         data.q4 = ZERO;
     }
@@ -536,8 +537,8 @@ fn jtv(
         let ydn = YMIN + (jy as sunrealtype - 0.5) * dely;
         let yup = ydn + dely;
 
-        let cydn = verdco * (0.2 * ydn).exp();
-        let cyup = verdco * (0.2 * yup).exp();
+        let cydn = verdco * sundials_libm::exp(0.2 * ydn);
+        let cyup = verdco * sundials_libm::exp(0.2 * yup);
 
         let idn: i32 = if jy == 0 { 1 } else { -1 };
         let iup: i32 = if jy == MY - 1 { -1 } else { 1 };
@@ -649,8 +650,8 @@ fn Precond(
         for jy in 0..MY {
             let ydn = YMIN + (jy as sunrealtype - 0.5) * dely;
             let yup = ydn + dely;
-            let cydn = verdco * (0.2 * ydn).exp();
-            let cyup = verdco * (0.2 * yup).exp();
+            let cydn = verdco * sundials_libm::exp(0.2 * ydn);
+            let cyup = verdco * sundials_libm::exp(0.2 * yup);
             let diag = -(cydn + cyup + TWO * hordco);
             for jx in 0..MX {
                 let c1 = udata[IJKth(1, jx, jy)];

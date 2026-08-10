@@ -31,6 +31,7 @@
 use std::any::Any;
 
 use idas_rs::prelude::*;
+use idas_rs::sundials_libm;
 
 /* Problem Constants. */
 
@@ -645,7 +646,7 @@ fn WebRates(
         );
     }
 
-    let fac = ONE + ALPHA * xx * yy + BETA * (FOURPI * xx).sin() * (FOURPI * yy).sin();
+    let fac = ONE + ALPHA * xx * yy + BETA * sundials_libm::sin(FOURPI * xx) * sundials_libm::sin(FOURPI * yy);
 
     for is in 0..NUM_SPECIES {
         ratesxy[is] = cxy[is] * (bcoef[is] * fac + ratesxy[is]);

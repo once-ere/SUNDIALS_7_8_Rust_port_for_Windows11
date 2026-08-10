@@ -34,6 +34,7 @@
 use arkode_rs::prelude::*;
 
 use std::any::Any;
+use arkode_rs::sundials_libm;
 
 /* ark_harmonic_symplectic.h */
 
@@ -233,8 +234,8 @@ fn main() {
     /* Fill the initial conditions (x0 then v0) */
     {
         let mut ydata = N_VGetArrayPointer(&y).expect("y data");
-        ydata[0] = A * phi.cos();
-        ydata[1] = -A * omega * phi.sin();
+        ydata[0] = A * sundials_libm::cos(phi);
+        ydata[1] = -A * omega * sundials_libm::sin(phi);
     }
 
     /* Create SPRKStep integrator */
@@ -356,8 +357,8 @@ fn Solution(t: sunrealtype, _y: &N_Vector, solvec: &N_Vector, udata: &UserData) 
     let mut sol = N_VGetArrayPointer(solvec).expect("solvec data");
 
     /* compute solution */
-    sol[0] = udata.A * (udata.omega * t + udata.phi).cos();
-    sol[1] = -udata.A * udata.omega * (udata.omega * t + udata.phi).sin();
+    sol[0] = udata.A * sundials_libm::cos(udata.omega * t + udata.phi);
+    sol[1] = -udata.A * udata.omega * sundials_libm::sin(udata.omega * t + udata.phi);
 }
 
 fn Energy(yvec: &N_Vector, _dt: sunrealtype, udata: &UserData) -> sunrealtype {

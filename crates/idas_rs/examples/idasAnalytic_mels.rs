@@ -25,6 +25,7 @@
 use std::any::Any;
 
 use idas_rs::prelude::*;
+use idas_rs::sundials_libm;
 
 /* Main Program */
 fn main() {
@@ -214,7 +215,7 @@ fn fres(
     let x1p = NV_DATA_S(yp)[0]; /* access current derivative values */
 
     let mut rrdata = NV_DATA_S(rr);
-    rrdata[0] = (ONE - alpha) / (t - TWO) * x1 - x1 + (alpha - ONE) * x2 + TWO * t.exp() - x1p;
+    rrdata[0] = (ONE - alpha) / (t - TWO) * x1 - x1 + (alpha - ONE) * x2 + TWO * sundials_libm::exp(t) - x1p;
     rrdata[1] = (t + TWO) * x1 - (t + TWO) * SUNRexp(t);
 
     0

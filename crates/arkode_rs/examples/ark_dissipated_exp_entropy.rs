@@ -25,14 +25,15 @@ use arkode_rs::prelude::*;
 use std::any::Any;
 use std::fs::File;
 use std::io::Write;
+use arkode_rs::sundials_libm;
 
 /* Convince macros for calling precision-specific math functions */
 fn EXP(x: sunrealtype) -> sunrealtype {
-    x.exp()
+    sundials_libm::exp(x)
 }
 
 fn LOG(x: sunrealtype) -> sunrealtype {
-    x.ln()
+    sundials_libm::log(x)
 }
 
 /* C `atoi` (strtol semantics): longest valid leading integer, 0 otherwise */
