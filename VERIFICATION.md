@@ -71,7 +71,12 @@ x86-64, measured against a real glibc oracle: the oracle is built and run by
 the guest `cc` inside WSL2, the Rust is compiled by `x86_64-pc-windows-msvc`
 and executed natively on Windows, and the two sides regenerate the argument
 corpus from a shared splitmix64 recurrence whose hash is checked before any
-result is compared.
+result is compared. Every corpus opens with **56 shared exceptional
+inputs** — NaN, ±inf, ±0, ±DBL_MAX, ±DBL_MIN, largest and smallest
+subnormals, ±1 and 1±1ulp, the `exp` and `sinh`/`cosh` overflow thresholds,
+the tiny-argument cutoffs, π/2 multiples and Payne–Hanek boundaries — so the
+NaN/infinity/overflow/underflow branches of every routine are measured, not
+merely read.
 
 | routine | development corpus | out-of-sample corpus | mismatches |
 |---|---:|---:|---:|
@@ -117,7 +122,7 @@ C produces on the same machine. That comparison was made on Linux, not on
 Windows: no pristine C build of SUNDIALS 7.8.0 has been made with MSVC or
 clang-cl on this host. So this file says **0 port defects identified**, not
 *proven*. The inference is strong — same Rust source, same divergent set,
-proven there — but it is an inference. `current_status.md` §6 item 1 is the
+proven there — but it is an inference. `current_status.md` §7 item 1 is the
 job that would close it.
 
 

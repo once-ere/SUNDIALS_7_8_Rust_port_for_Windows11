@@ -37,6 +37,37 @@
 //! matters here. See `POW_FMA_EXACTNESS.md` for how the same question was
 //! settled for `pow`.
 //!
+//! # Preconditions — two things this module needs and cannot enforce
+//!
+//! **1. An FMA instruction.** `f64::mul_add` lowers to `llvm.fma.f64`. The
+//! default `x86_64-pc-windows-msvc` baseline is SSE2, which has no FMA, so
+//! LLVM emits a *call into the C runtime's* `fma` instead of an instruction —
+//! measured on rustc 1.91.1, `a.mul_add(b, c)` compiles to `jmp fma`. That
+//! is value-safe only if the runtime's `fma` is correctly rounded (IEEE-754
+//! requires it, and the differential runs confirm it here), but it means the
+//! host C library is not fully out of the path unless the feature is on.
+//! `.cargo/config.toml` therefore pins `-C target-feature=+fma` for
+//! `x86_64`, which makes it `vfmadd213sd`. **A downstream crate depending on
+//! `sundials_core` must set the same flag**, or accept the host `fma`.
+//! Consequence: a CPU with FMA is required (Haswell 2012+/Piledriver 2011+) —
+//! not a new restriction, since glibc only selects the FMA build of these
+//! routines when the CPU reports FMA, so bit-exactness with the reference
+//! outputs was never available without it.
+//!
+//! **2. The default floating-point environment**: round-to-nearest-even, and
+//! no flush-to-zero / denormals-are-zero. glibc's `sin`, `cos` and `atan`
+//! wrap their bodies in `SET_RESTORE_ROUND (FE_TONEAREST)`, which rewrites
+//! the MXCSR rounding-control bits for the duration of the call and restores
+//! them on return, so they give round-to-nearest answers even to a caller
+//! running in another mode. This module cannot do that — MXCSR is not
+//! reachable from safe `std` Rust — so it inherits the ambient mode instead.
+//! MXCSR is process-global: a linked C dependency calling `fesetround`, or
+//! one built with `-ffast-math` whose startup code sets FTZ/DAZ, would change
+//! these results. SUNDIALS itself never changes it and neither does Rust, so
+//! the precondition holds in practice; it is stated because no test here can
+//! detect its violation, the differential least of all — it runs in exactly
+//! the environment it assumes.
+//!
 //! # Provenance and licence
 //!
 //! Two different upstreams, and the distinction is deliberate:

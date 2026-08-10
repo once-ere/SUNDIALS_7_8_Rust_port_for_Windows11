@@ -9,7 +9,10 @@
 //! With no `SUNDIALS_LIBM_ORACLE_DIR` in the environment every differential
 //! test reports "not run" and passes: `cargo test` stays green on hosts
 //! where no oracle was built, and on non-glibc hosts where one would be
-//! meaningless.
+//! meaningless. **A green `cargo test` on its own is therefore not evidence
+//! that anything was compared.** Set `SUNDIALS_LIBM_ORACLE_STRICT` to turn a
+//! missing oracle into a hard failure; `tools/libm_differential_win.sh` sets
+//! it, so a run that was meant to measure cannot silently measure nothing.
 //!
 //! SPDX-License-Identifier: BSD-3-Clause
 
@@ -76,9 +79,37 @@ fn half_pow(k: u32) -> f64 {
     e
 }
 
+/// Exceptional inputs, evaluated first in every corpus. One shared table for
+/// all twelve routines: a value out of domain for one is in domain for
+/// another, so evaluating all of them everywhere is what reaches the
+/// NaN/infinity/overflow/underflow branches each routine carries. Without
+/// this the differential measures only the arithmetic core and leaves every
+/// special-value branch unpinned.
+///
+/// Keep byte-for-byte in step with `SPECIAL` in `tools/libm_oracle.c`.
+pub const SPECIAL: [u64; 56] = [
+    0x7ff8000000000000, 0xfff8000000000000, 0x7ff0000000000000, 0xfff0000000000000,
+    0x0000000000000000, 0x8000000000000000, 0x3ff0000000000000, 0xbff0000000000000,
+    0x4000000000000000, 0xc000000000000000, 0x3fe0000000000000, 0xbfe0000000000000,
+    0x7fefffffffffffff, 0xffefffffffffffff, 0x0010000000000000, 0x8010000000000000,
+    0x000fffffffffffff, 0x800fffffffffffff, 0x0000000000000001, 0x8000000000000001,
+    0x3c90000000000000, 0xbc90000000000000, 0x3e30000000000000, 0xbe30000000000000,
+    0x3e50000000000000, 0xbe50000000000000, 0x3c70000000000000, 0xbc70000000000000,
+    0x40862e42fefa39ef, 0x40862e42fefa39f0, 0x40862e6666666666, 0xc0874910d52d3051,
+    0xc08749999999999a, 0x4090000000000000, 0xc090000000000000, 0xc043687fa440e825,
+    0x408633ce8fb9f87d, 0xc08633ce8fb9f87d, 0x4086340000000000, 0xc086340000000000,
+    0x4036000000000000, 0xc036000000000000, 0x3ff0000000000001, 0xbff0000000000001,
+    0x41b0000000000000, 0x7e37e43c8800759c, 0x3fefffffffffffff, 0xbff8000000000000,
+    0x7fe1ccf385ebc8a0, 0x000730d67819e8d2, 0x3ff921fb54442d18, 0x400921fb54442d18,
+    0x401921fb54442d18, 0x4480f0cf064dd592, 0x43e0000000000000, 0x7fe0000000000000,
+];
+
 /// Transliteration of `gen()` in `tools/libm_oracle.c`. Keep in lockstep.
 pub fn gen(f: Fn_, i: u32, r: &mut SplitMix64) -> f64 {
-    let m = i % 10;
+    if (i as usize) < SPECIAL.len() {
+        return f64::from_bits(SPECIAL[i as usize]);
+    }
+    let m = (i - SPECIAL.len() as u32) % 10;
     match f {
         Fn_::Exp => {
             if m < 6 {
@@ -210,9 +241,24 @@ fn fnv(h: &mut u64, b: u64) {
 /// Returns `None` when no oracle is available. Otherwise returns
 /// `(n, mismatches, worst_ulp)` and prints the first few disagreements.
 pub fn run_differential(f: Fn_, port: impl Fn(f64) -> f64) -> Option<(usize, usize, i64)> {
-    let dir = std::env::var("SUNDIALS_LIBM_ORACLE_DIR").ok()?;
+    /* Strict mode. Without it a missing oracle, a misspelled variable or a
+    renamed stream makes every one of these tests pass while comparing
+    nothing — a green `cargo test` would then be no evidence at all. The
+    harness sets SUNDIALS_LIBM_ORACLE_STRICT, so a run that was *meant* to
+    measure fails loudly instead of silently degrading to a no-op. */
+    let strict = std::env::var("SUNDIALS_LIBM_ORACLE_STRICT").is_ok();
+    let dir = match std::env::var("SUNDIALS_LIBM_ORACLE_DIR") {
+        Ok(d) => d,
+        Err(_) => {
+            assert!(!strict, "SUNDIALS_LIBM_ORACLE_STRICT is set but \
+                              SUNDIALS_LIBM_ORACLE_DIR is not");
+            return None;
+        }
+    };
     let path = std::path::Path::new(&dir).join(format!("{}.bin", f.name()));
     if !path.exists() {
+        assert!(!strict, "SUNDIALS_LIBM_ORACLE_STRICT is set but there is no \
+                          oracle at {}", path.display());
         return None;
     }
     let blob = std::fs::read(&path).unwrap_or_else(|e| panic!("{}: {e}", path.display()));

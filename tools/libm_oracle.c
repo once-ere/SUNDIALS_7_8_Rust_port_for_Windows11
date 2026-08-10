@@ -72,13 +72,40 @@ static double half_pow(unsigned k)
   return e;
 }
 
-/* Argument corpus. Ten sub-modes per function, selected by i % 10, so every
+/* Exceptional inputs, evaluated first in every corpus, before the random
+ * modes below. One shared table for all twelve functions: a value that is
+ * out of domain for one is in domain for another, so evaluating all of them
+ * everywhere is what reaches the NaN/infinity/overflow/underflow branches
+ * each routine carries. Without this the differential measures only the
+ * arithmetic core and leaves every special-value branch unpinned.
+ *
+ * Keep byte-for-byte in step with SPECIAL in corpus.rs. */
+#define N_SPECIAL 56
+static const uint64_t SPECIAL[N_SPECIAL] = {
+  0x7ff8000000000000ull, 0xfff8000000000000ull, 0x7ff0000000000000ull, 0xfff0000000000000ull,
+  0x0000000000000000ull, 0x8000000000000000ull, 0x3ff0000000000000ull, 0xbff0000000000000ull,
+  0x4000000000000000ull, 0xc000000000000000ull, 0x3fe0000000000000ull, 0xbfe0000000000000ull,
+  0x7fefffffffffffffull, 0xffefffffffffffffull, 0x0010000000000000ull, 0x8010000000000000ull,
+  0x000fffffffffffffull, 0x800fffffffffffffull, 0x0000000000000001ull, 0x8000000000000001ull,
+  0x3c90000000000000ull, 0xbc90000000000000ull, 0x3e30000000000000ull, 0xbe30000000000000ull,
+  0x3e50000000000000ull, 0xbe50000000000000ull, 0x3c70000000000000ull, 0xbc70000000000000ull,
+  0x40862e42fefa39efull, 0x40862e42fefa39f0ull, 0x40862e6666666666ull, 0xc0874910d52d3051ull,
+  0xc08749999999999aull, 0x4090000000000000ull, 0xc090000000000000ull, 0xc043687fa440e825ull,
+  0x408633ce8fb9f87dull, 0xc08633ce8fb9f87dull, 0x4086340000000000ull, 0xc086340000000000ull,
+  0x4036000000000000ull, 0xc036000000000000ull, 0x3ff0000000000001ull, 0xbff0000000000001ull,
+  0x41b0000000000000ull, 0x7e37e43c8800759cull, 0x3fefffffffffffffull, 0xbff8000000000000ull,
+  0x7fe1ccf385ebc8a0ull, 0x000730d67819e8d2ull, 0x3ff921fb54442d18ull, 0x400921fb54442d18ull,
+  0x401921fb54442d18ull, 0x4480f0cf064dd592ull, 0x43e0000000000000ull, 0x7fe0000000000000ull,
+};
+
+/* Argument corpus. The special table above first, then ten sub-modes per function, selected by i % 10, so every
  * corpus mixes the operating range, the extremes and the awkward
  * neighbourhoods (near 1 for log, near +-1 for asin/acos, near multiples of
  * pi/2 for sin/cos, huge arguments that force Payne-Hanek reduction). */
 static double gen(int fn, unsigned i)
 {
-  unsigned m = i % 10;
+  if (i < N_SPECIAL) { return bits_to_f64(SPECIAL[i]); }
+  unsigned m = (i - N_SPECIAL) % 10;
   switch (fn)
   {
     case FN_EXP:

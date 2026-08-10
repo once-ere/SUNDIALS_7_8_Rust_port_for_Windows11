@@ -320,8 +320,15 @@ pub fn atan(x: f64) -> f64 {
     }
 
     /* Regular values of x, including denormals +-0 and +-INF.
-    SET_RESTORE_ROUND (FE_TONEAREST) is a no-op here: Rust has no access to
-    a non-default rounding mode, so round-to-nearest-even already holds. */
+
+    The C wraps everything from here on in SET_RESTORE_ROUND (FE_TONEAREST),
+    which rewrites the MXCSR rounding-control bits for the duration of the
+    call and restores them on return — so glibc's atan answers in
+    round-to-nearest even when its caller is in another mode. This port
+    cannot do that: MXCSR is not reachable from safe std Rust. It therefore
+    inherits the ambient mode, which makes "the default floating-point
+    environment" a precondition of this module rather than something it
+    enforces. See the Preconditions section of `sundials_libm`. */
     let u = if x < 0.0 { -x } else { x };
 
     if u < f64::from_bits(C) {

@@ -44,6 +44,20 @@ cargo build --workspace
 cargo run -p cvode_rs --example cvRoberts_dns
 ```
 
+**Requires an FMA-capable x86-64 CPU** (Intel Haswell 2012+, AMD Piledriver
+2011+). `.cargo/config.toml` pins `-C target-feature=+fma` so that
+`f64::mul_add` compiles to an instruction rather than a call into the C
+runtime — without it the port would still depend on the host's `fma`. glibc
+itself only selects the FMA build of these routines when the CPU reports FMA,
+so bit-exactness with the reference outputs was never available without one.
+
+The routines also assume the **default floating-point environment**
+(round-to-nearest-even, no flush-to-zero). glibc's `sin`, `cos` and `atan`
+force round-to-nearest for the duration of the call; safe Rust cannot reach
+MXCSR, so this port inherits the ambient mode instead. Nothing in SUNDIALS or
+Rust changes it — but a linked C dependency could, and no test here could
+detect that.
+
 ```rust
 use cvode_rs::prelude::*;
 ```

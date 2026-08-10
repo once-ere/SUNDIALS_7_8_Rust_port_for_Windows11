@@ -15,10 +15,12 @@ Linux/glibc sibling, on exactly the same 26 variants.**
 | deterministic `pow` vs **glibc `pow`** | 5,900,000 + 20,000,000 inputs, **0 mismatches** | PASS |
 | deterministic libm (12 routines) vs **glibc 2.39**, development corpus | 4,000,000 inputs each — **48,000,000 comparisons, 0 mismatches** | PASS |
 | deterministic libm, **out-of-sample** corpus | 8,000,000 inputs each — **96,000,000 comparisons, 0 mismatches**, the second half never seen while porting | PASS |
+| every corpus begins with 56 exceptional inputs (NaN, ±inf, ±0, subnormals, domain boundaries, overflow thresholds) | all special-value branches measured | PASS |
+| same, with `mul_add` forced back to a call into the host `fma` | 0 mismatches — the two codegen paths agree | PASS |
 | host libm reachable from the port | **no** — 0 call sites outside `sundials_libm` | PASS |
 | `tools/verify_examples.sh all` (199 reference variants) | **153 IDENTICAL / 26 divergent / 20 excluded (KLU/SuperLU)** | PASS — parity with Linux |
 | the 26 divergences | **exactly** the Linux port's set, variant for variant; 15 whitespace-only, 11 content | reference-side |
-| port defects | **0 identified** (see §6 item 1 for what would make that "proven" here) | — |
+| port defects | **0 identified** (see §7 item 1 for what would make that "proven" here) | — |
 
 Measured host: Windows 11 Pro for Workstations 10.0.26200.8655 (25H2),
 Intel Core Ultra 9 275HX, `ucrtbase.dll` 10.0.26100.8521, rustc/cargo 1.91.1,
@@ -187,7 +189,66 @@ and dropping it costs byte-identity, not correctness. `NOTICE` opens with the
 summary; the upstream C is not committed (`tools/fetch_libm_sources.sh`
 fetches it into the gitignored `reference/`).
 
-## 5. Deficiencies
+## 5. Adversarial review, and what it changed
+
+After the routines were measured green, three independent reviewers were run
+over `sundials_libm` with one instruction each: find what a differential test
+*cannot* catch. They found four things worth acting on, and all four are now
+closed. They are recorded here because each one was a real hole in the
+evidence, not in the arithmetic.
+
+**1. `mul_add` was calling into the host C runtime.** The module claimed the
+host libm was out of the path; it was not, quite. `f64::mul_add` lowers to
+`llvm.fma.f64`, and the default `x86_64-pc-windows-msvc` baseline is SSE2,
+which has no FMA instruction — so LLVM emitted a call instead. Verified on
+this toolchain: `a.mul_add(b, c)` compiles to `jmp fma`, a tail call into
+`ucrtbase.dll`; with the feature enabled it compiles to `vfmadd213sd`. That
+is value-safe only if the runtime's `fma` is correctly rounded.
+*Resolution:* `.cargo/config.toml` now pins `-C target-feature=+fma` for
+x86-64, and the whole differential was re-run **both ways** — with the
+instruction and with the libcall — giving 0 mismatches in both. So the UCRT's
+`fma` is correctly rounded here (as IEEE-754 requires), every earlier
+measurement stands, and the property is now enforced by the build rather than
+assumed of the host. Consequence: binaries from this workspace require an
+FMA-capable CPU (Haswell 2012+ / Piledriver 2011+) — not a new restriction,
+since glibc only selects the FMA build of these routines when the CPU reports
+FMA, so bit-exactness was never available without it.
+
+**2. glibc's `SET_RESTORE_ROUND` cannot be reproduced, and the code said it
+was a no-op.** glibc wraps `sin`, `cos` and `atan` in
+`SET_RESTORE_ROUND (FE_TONEAREST)`, which rewrites the MXCSR rounding-control
+bits for the duration of the call — so those routines answer in
+round-to-nearest even when the caller is in another mode. Two comments in the
+port dismissed this as an x86-64 no-op. That was wrong about the C: on
+x86-64 `SET_RESTORE_ROUND_53BIT` *is* `SET_RESTORE_ROUND`, and it does touch
+MXCSR. *Resolution:* the comments are corrected, and the default
+floating-point environment — round-to-nearest-even, no FTZ/DAZ — is now a
+stated **precondition** of `sundials_libm`. It cannot be enforced from safe
+`std` Rust, and no differential can detect its violation, because the
+differential runs in exactly the environment it assumes. SUNDIALS never
+changes it and neither does Rust, so it holds in practice.
+
+**3. The differential tests passed vacuously without an oracle.** A missing
+stream, a misspelled variable or a renamed file made all twelve report "not
+run" and pass — so a green `cargo test` was not, on its own, evidence that
+anything had been compared. *Resolution:* `SUNDIALS_LIBM_ORACLE_STRICT` turns
+a missing oracle into a hard failure, and `tools/libm_differential_win.sh`
+sets it. A run that was meant to measure can no longer report success having
+measured nothing. (Verified: it panics.)
+
+**4. The corpus never produced NaN, ±inf, or out-of-domain arguments.** Every
+generator filtered to finite in-domain values, so the special-value branches
+of all twelve routines — `exp(-inf)`, `log(0)`, `asin(2)`, `acosh(0.5)`, the
+overflow and underflow tails, the ±0 sign paths — were unmeasured despite the
+4,000,000-input headline. *Resolution:* both the C oracle and its Rust twin
+now begin every corpus with **56 shared exceptional values** (NaN, ±inf, ±0,
+±DBL_MAX, ±DBL_MIN, largest and smallest subnormals, ±1 and 1±1ulp, the exp
+and sinh/cosh overflow thresholds, the tiny-argument cutoffs, π/2 multiples
+and Payne–Hanek boundaries). One shared table for all twelve, because a value
+out of domain for one is in domain for another. All oracles were regenerated
+— every input hash changed — and every routine is still 0 mismatches.
+
+## 6. Deficiencies
 
 None outstanding against the task. For the record, the two limits that remain
 are limits of *evidence*, not of the port, and both are in §6.
@@ -202,8 +263,11 @@ Two things are deliberately **not** claimed:
    This port now carries its own 2.39-equivalent versions of all of them, so
    it is *insulated* from that drift — which also means that on a host whose
    glibc differs from 2.39 the port reproduces 2.39, deliberately.
+3. **The default floating-point environment.** Round-to-nearest-even and no
+   FTZ/DAZ are preconditions, not guarantees — see §5 item 2.
+4. **An FMA-capable CPU**, which the build now requires — see §5 item 1.
 
-## 6. Open items (not blocking)
+## 7. Open items (not blocking)
 
 1. **Pristine C build on Windows.** Building upstream SUNDIALS 7.8.0 here with
    cmake + MSVC/clang-cl and comparing Rust vs that C vs the shipped `.out`
@@ -224,7 +288,7 @@ Two things are deliberately **not** claimed:
    or the examples calls them. If a future example does, it must be added to
    `sundials_libm` rather than taken from the host.
 
-## 7. How to reproduce, from a clean checkout
+## 8. How to reproduce, from a clean checkout
 
 On Windows 11 x86-64 with rustup, Git Bash, and (for the oracles) a WSL2 Linux
 guest:
@@ -254,7 +318,7 @@ SUNDIALS_C_TREE=/c/Users/nsh/Developer/sundials-7.8.0 tools/classify_diffs.sh
 
 Then read `logs/summary.txt` and `logs/classify_diffs.txt`.
 
-## 8. Provenance
+## 9. Provenance
 
 * **Upstream:** SUNDIALS 7.8.0, LLNL, BSD-3-Clause. Read-only reference at
   `C:\Users\nsh\Developer\sundials-7.8.0` on the machine this was built on.

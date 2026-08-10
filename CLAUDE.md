@@ -52,6 +52,19 @@ the Linux port's set. Rules that follow:
   so those fuse `a*b + c`; `sinh`, `cosh` and `acosh` have no FMA variant and
   must not. Use `f64::mul_add` exactly where the FMA build fuses.
 
+* **Two preconditions the module cannot enforce, and must not be quietly
+  dropped from the docs.** (a) `f64::mul_add` lowers to `llvm.fma.f64`, and
+  on the SSE2 msvc baseline that is a *call into `ucrtbase`*, not an
+  instruction — `.cargo/config.toml` pins `-C target-feature=+fma` to fix
+  that, and a downstream crate must do the same. (b) glibc's `sin`, `cos` and
+  `atan` wrap themselves in `SET_RESTORE_ROUND (FE_TONEAREST)`, which is
+  **not** an x86-64 no-op; safe Rust cannot reach MXCSR, so the default
+  floating-point environment is a precondition. See the Preconditions section
+  of `sundials_libm`.
+* **`SUNDIALS_LIBM_ORACLE_STRICT` when you mean to measure.** Without it a
+  missing oracle makes all twelve differentials pass having compared nothing.
+  The harness sets it; set it by hand if you run `cargo test` directly.
+
 Never present this port as byte-identical to all 199 references, and never
 close a divergence by tuning an example or widening `noise_filter()`.
 
@@ -137,7 +150,7 @@ set of variants. **A divergence is a port defect only when Rust != pristine C
 on the same host**, and that comparison was made on Linux, not here. Until
 someone builds upstream SUNDIALS on Windows with cmake + MSVC/clang-cl and
 re-runs the three-way comparison, say "0 port defects identified", never "0
-port defects proven". `current_status.md` §6 item 1 is that job.
+port defects proven". `current_status.md` §7 item 1 is that job.
 
 `tools/classify_diffs.sh` is the second pass — it re-diffs the non-IDENTICAL
 variants under `tr -s ' '` and `diff -w` so a whitespace-only divergence

@@ -476,9 +476,21 @@ fn branred(x: f64) -> (f64, f64, i32) {
 }
 
 /* ==========================================================================
-   The two entry points.  `SET_RESTORE_ROUND_53BIT` is an x86-64 no-op (it
-   only matters for the i387 extended-precision unit), and `__set_errno`
-   affects no returned bit pattern, so neither appears here.
+   The two entry points.
+
+   `SET_RESTORE_ROUND_53BIT` is NOT a no-op on x86-64, contrary to what its
+   name suggests: glibc's math_private.h defines it as plain
+   SET_RESTORE_ROUND on targets that need no i387 precision control, and that
+   rewrites the MXCSR rounding-control bits to FE_TONEAREST for the duration
+   of the call, restoring them on return. glibc's sin and cos therefore
+   answer in round-to-nearest even when their caller is in another rounding
+   mode. This port cannot reproduce that — MXCSR is not reachable from safe
+   std Rust — so it inherits the ambient mode, and "the default
+   floating-point environment" becomes a precondition of this module rather
+   than something it enforces. See the Preconditions section of
+   `sundials_libm`.
+
+   `__set_errno` affects no returned bit pattern and so does not appear here.
    ========================================================================== */
 
 /// C `sin(double x)` — glibc 2.39 `__sin`.

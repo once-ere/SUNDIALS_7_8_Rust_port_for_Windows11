@@ -84,7 +84,10 @@ if [ -n "$FNS" ]; then
 fi
 
 say "-- differential: sundials_libm (native Windows build) vs glibc --"
-SUNDIALS_LIBM_ORACLE_DIR="$ORACLE_DIR" \
+# STRICT turns "no oracle -> the test passes without comparing anything" into
+# a hard failure. This script exists to measure; a run of it that measured
+# nothing must not report success.
+SUNDIALS_LIBM_ORACLE_DIR="$ORACLE_DIR" SUNDIALS_LIBM_ORACLE_STRICT=1 \
   cargo test --release -p sundials_core --lib sundials_libm \
   -- --nocapture --test-threads=1 2>&1 | tee -a "$LOG" | grep -vE '^\s*(Compiling|Finished)'
 

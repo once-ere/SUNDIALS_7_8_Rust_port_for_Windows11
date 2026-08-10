@@ -1,4 +1,8 @@
-== deterministic libm vs glibc 2.39 — development corpus (4,000,000 per function) ==
+== deterministic libm vs glibc 2.39 ==
+Corpus: 56 shared special values (NaN, +-inf, +-0, subnormals, domain
+boundaries, overflow thresholds) followed by function-specific random modes.
+
+-- development corpus, 4,000,000 per function --
 acos_vs_glibc_oracle ... acos differential: 4000000 inputs, 0 mismatches, worst 0 ulp
 acosh_vs_glibc_oracle ... acosh differential: 4000000 inputs, 0 mismatches, worst 0 ulp
 asin_vs_glibc_oracle ... asin differential: 4000000 inputs, 0 mismatches, worst 0 ulp
@@ -12,7 +16,7 @@ log_vs_glibc_oracle ... log differential: 4000000 inputs, 0 mismatches, worst 0 
 sin_vs_glibc_oracle ... sin differential: 4000000 inputs, 0 mismatches, worst 0 ulp
 sinh_vs_glibc_oracle ... sinh differential: 4000000 inputs, 0 mismatches, worst 0 ulp
 
-== out-of-sample corpus (8,000,000 per function; the second 4,000,000 were never seen during porting) ==
+-- out-of-sample corpus, 8,000,000 per function --
 -- differential: sundials_libm (native Windows build) vs glibc --
 acos_vs_glibc_oracle ... acos differential: 8000000 inputs, 0 mismatches, worst 0 ulp
 acosh_vs_glibc_oracle ... acosh differential: 8000000 inputs, 0 mismatches, worst 0 ulp
