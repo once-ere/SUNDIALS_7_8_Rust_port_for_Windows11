@@ -5,14 +5,14 @@ macOS port's status record, kept because it documents how the translation
 was finished phase by phase.
 
 > **For this repository's status read [`current_status.md`](current_status.md).**
-> Windows 11 / x86-64 / UCRT results: `cargo build --workspace` 0 errors and
-> 0 warnings, `cargo test --workspace --lib` 28 passed, the deterministic
-> `pow` 0 mismatches over 25.9M inputs against a **glibc** oracle (while the
-> host UCRT `pow` differs from it on 1 domain input in 1,198), all 108
-> example programs building and running, and the example gate at
-> **125 IDENTICAL / 54 divergent / 20 excluded**, 0 port defects identified.
-> That gate is *not* a pass against the 100 % byte-identity target, and the
-> reason is the host libm — see `current_status.md` §§4–5.
+> Windows 11 / x86-64 results: `cargo build --workspace` 0 errors and 0
+> warnings, `cargo test --workspace` 40 passed, the deterministic `pow` 0
+> mismatches over 25.9M inputs against a **glibc** oracle, the twelve
+> `sundials_libm` routines 0 mismatches over 96M inputs against the same, no
+> host libm call site left anywhere in the port, all 108 example programs
+> building and running, and the example gate at **153 IDENTICAL / 26
+> divergent / 20 excluded**, 0 port defects identified — the Linux sibling's
+> result, on exactly its set of divergences.
 
 The *translation* is finished. All eight phases are done and every crate
 was verified against the upstream reference outputs on the platform this
@@ -26,8 +26,9 @@ record, Part C the inherited macOS one); for per-file status `PROGRESS.md`.
 > on Apple Silicon (arm64), against Apple's libm, with the pristine upstream
 > C comparison binaries built by Apple clang.** The table below, the
 > cold-tree bullets and the 52 documented divergences are results on that
-> platform. On Linux/glibc/x86-64 the corresponding tally is 153 / 26 / 20;
-> on Windows/UCRT/x86-64, this repository's target, it is 125 / 54 / 20.
+> platform. On Linux/glibc/x86-64 the corresponding tally is 153 / 26 / 20,
+> and on Windows/x86-64 — this repository's target, with the host libm
+> replaced — it is also **153 / 26 / 20**, on the same variants.
 >
 > The sources are portable — `std` only, no `unsafe`, no FFI, no
 > `cfg(target_os)`/`cfg(target_arch)` — and build warning-free and pass all

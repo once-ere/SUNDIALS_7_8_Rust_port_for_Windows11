@@ -12,16 +12,16 @@ authoritative statement of what is measured, what is not, and what remains.
 | gate | result |
 |---|---|
 | `cargo build --workspace`, native `x86_64-pc-windows-msvc` | **0 errors, 0 warnings** |
-| `cargo test --workspace --lib` | **28 passed, 0 failed** |
+| `cargo test --workspace` | **40 passed, 0 failed** |
 | all 108 in-scope example programs build and run (199 argv variants) | **0 build failures, 0 run failures** |
-| deterministic `pow`, built and run natively on Windows, vs **glibc `pow`** | **0 mismatches over 25,900,000 inputs** |
-| `tools/verify_examples.sh all` — byte-identity against the upstream references | **125 IDENTICAL / 54 divergent / 20 excluded (KLU/SuperLU)** |
-| port defects among the 54 | **0 identified** — 26 proven reference-side on glibc, 28 attributed to the Windows host libm by direct measurement |
+| deterministic `pow` vs **glibc `pow`**, built and run natively on Windows | **0 mismatches over 25,900,000 inputs** |
+| deterministic libm — 12 routines vs **glibc 2.39** | **0 mismatches over 96,000,000 inputs** (8,000,000 each; the second half never seen while porting) |
+| host libm reachable from the port | **no** — 0 call sites outside `sundials_libm` |
+| `tools/verify_examples.sh all` — byte-identity against the upstream references | **153 IDENTICAL / 26 divergent / 20 excluded (KLU/SuperLU)** |
+| the 26 divergences | **exactly** the Linux/glibc sibling's set, variant for variant — reference-side, 0 port defects |
 
-The last row is the honest headline: **this port is not byte-identical to
-the upstream reference outputs on Windows, and it will not be until further
-libm routines are ported.** `current_status.md` §5 lists exactly which ones,
-why, and what each would buy.
+That is parity with the Linux port, reached by taking the host libm out of
+the code entirely rather than by tolerating it.
 
 ## Headline facts
 
@@ -30,7 +30,7 @@ why, and what each would buy.
   on each other.
 * 141 modules, one per upstream C file, keeping the exact C function names,
   constants and return-flag conventions (`CV_SUCCESS = 0`; negative fatal,
-  positive recoverable).
+  positive recoverable), plus a 9-module deterministic libm.
 * Serial only. No MPI, GPU, KLU, SuperLU, LAPACK, Fortran or XBraid backends.
 * The crate tree is **inherited unchanged** from the sibling port
   [`SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos`](https://github.com/once-ere/SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos),
@@ -65,15 +65,14 @@ portable — `std` only, no `unsafe`, no FFI, no `cfg(target_os)` or
 `cfg(target_arch)` anywhere in the tree — so they compile and unit-test on
 any target Rust supports. What does not travel is the numerical evidence.
 
-### Why byte-identity is hard on Windows
+### Why the host libm had to go
 
-The upstream reference `.out` files were generated on a **glibc** host. The
-port evaluates `sin`, `cos`, `exp`, `ln`, `asin`, `acos`, `atan`, `sinh`,
-`cosh` and `acosh` through `f64` methods that Rust documents as having
-*unspecified precision* and that forward to the **host** libm — on this
-target, the Microsoft UCRT. `tools/libm_fingerprint_win.sh` builds the same
-Rust probe natively on Windows and inside a WSL2 glibc guest and hashes
-1,000,000 results per function. The verdict:
+The upstream reference `.out` files were generated on a **glibc** host, and
+Rust's `f64::sin`, `f64::exp`, … are documented as having *unspecified
+precision* and forward to the **host** libm — on this target, the Microsoft
+UCRT. `tools/libm_fingerprint_win.sh` builds the same Rust probe natively on
+Windows and inside a WSL2 glibc guest and hashes 1,000,000 results per
+function. The verdict:
 
 | function | Windows UCRT vs glibc 2.39 |
 |---|---|
@@ -82,20 +81,36 @@ Rust probe natively on Windows and inside a WSL2 glibc guest and hashes
 | `powf` — the host routine this port deliberately does *not* call | **differs** |
 
 Inside an adaptive integrator a one-ulp difference forks the step-size
-trajectory and therefore the printed output. That is the whole of the gap
-between 125 IDENTICAL here and 153 on the Linux sibling: the 54 divergent
-variants are a strict superset of that port's 26, and every one of the 28
-extra evaluates at least one differing function.
+trajectory and therefore the printed output. With the host libm in the path
+this port stood at **125 IDENTICAL**; the 54 divergent variants were a strict
+superset of the Linux sibling's 26, and every one of the 28 extra evaluated at
+least one differing function.
 
-### `pow` is the one that was fixed
+So the host libm was removed. `crates/sundials_core/src/sundials_libm/` now
+implements `exp`, `log`, `expm1`, `log1p`, `sin`, `cos`, `atan`, `asin`,
+`acos`, `sinh`, `cosh` and `acosh` in pure Rust, each a translation of the
+implementation glibc 2.39 selects on x86-64, and each measured against a real
+glibc oracle: **0 mismatches over 8,000,000 inputs per routine.** All 218 call
+sites were rewired, and the gate moved to **153 IDENTICAL** — the Linux
+result, on the Linux set.
+
+The detail that makes it work: glibc's x86-64 build ifunc-dispatches `exp`,
+`log`, `pow`, `sin`, `cos`, `atan`, `asin`, `acos`, `expm1` and `log1p` to an
+FMA rebuild of the generic source, so those fuse `a*b + c` into one `fma` and
+the Rust must use `f64::mul_add` in exactly the same places; `sinh`, `cosh`
+and `acosh` have no FMA variant and must not fuse. Rust never contracts on its
+own, which is what makes that reproducible.
+
+### `pow`, which was done first
 
 `crates/sundials_core/src/sundials_math.rs` contains `pow_glibc`, a
 pure-Rust port of the ARM optimized-routines / musl `pow` (MIT, © 2018 Arm
 Limited) — the same algorithm glibc ≥ 2.28 ships as
 `sysdeps/ieee754/dbl-64/e_pow.c`, and on x86-64 the same FMA-contracted
 build glibc ifunc-dispatches to as `__ieee754_pow_fma`. `SUNRpowerR` routes
-through it instead of `f64::powf`, which takes the host libm out of the
-`pow` path — **and only the `pow` path.**
+through it instead of `f64::powf`. It predates `sundials_libm` and stays
+where it is; the newer module follows the same reasoning for the other
+twelve routines.
 
 On Windows that substitution is load-bearing, and both halves of the claim
 are measured natively:
@@ -110,23 +125,34 @@ are measured natively:
   1,198 — round differently, always by 1 ulp.** Every one of those is a
   digit the port would have got wrong had it called `f64::powf`.
 
-`pow` is the only *libm* substitution, but not the only host-C-library one:
+The libm is not the only host-C-library dependence that had to go:
 `ark_analytic_lsrk_domeigest`, `ark_brusselator_lsrk_domeigest` and
 `ark_brusselator_lsrk_externaldomeigest` reproduce the BSD/glibc `rand()`
 TYPE_3 additive-feedback generator in Rust, sequence for sequence, because
 those examples feed pseudo-random vectors into a dominant-eigenvalue
 estimator and the draws are output-observable. See [`NOTICE`](NOTICE).
 
-### What would close the gap
+### What the 26 remaining divergences are
 
-Porting `exp`, `log`, `sin`, `cos`, `atan`, `asin`, `acos`, `sinh`, `cosh`
-and `acosh` to pure Rust the way `pow` was — reproducing glibc's algorithms,
-each with its own differential test against a glibc oracle. glibc's `exp`
-and `log` are from the same ARM optimized-routines family as the `pow`
-already here and are the cheapest; `sin`/`cos` (IBM Accurate Portable Math
-Library) are the largest item. Expected result: **154 IDENTICAL / 25
-divergent / 20 excluded.** The full breakdown, with call-site counts and
-per-routine sources, is [`current_status.md`](current_status.md) §5.
+They are the Linux port's 26, variant for variant, and that port root-caused
+every one of them against a pristine C build on glibc: **Rust == pristine C in
+all 26 cases, so the references are stale and the port is not wrong
+anywhere.** 15 are whitespace-only (`SUN_TABLE_WIDTH` column drift — every
+printed *value* identical); the other 11 are two LAPACK→native substitutions,
+two upstream `.out` anomalies, five references with trailing whitespace
+stripped, and two missing a final blank line the source prints
+unconditionally.
+
+### Licence — the deterministic libm changes it
+
+Six of the twelve routines are translations of glibc, which is
+**LGPL-2.1-or-later**; bit-exactness *is* the requirement and the IBM
+Accurate Mathematical Library tables are copied data, so there is no route to
+the same bits that avoids it. `exp` and `log` are MIT (musl / ARM
+optimized-routines) and the SUNDIALS translation stays BSD-3-Clause. The
+encumbered code is confined to `crates/sundials_core/src/sundials_libm/`,
+each file carries its `SPDX-License-Identifier`, and dropping it costs
+byte-identity, not correctness. See [`NOTICE`](NOTICE).
 
 ## Sibling ports
 
@@ -137,7 +163,7 @@ inside one tree.
 |---|---|---|
 | [`…_for_AppleSilicon_macos`](https://github.com/once-ere/SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos) | macOS / arm64 / Apple libm | 127 / 52 / 20 |
 | [`…_for_Linux`](https://github.com/once-ere/SUNDIALS_7_8_Rust_port_for_Linux) | Linux / x86-64 / glibc 2.36–2.41 | 153 / 26 / 20 |
-| **this one** | Windows 11 / x86-64 / UCRT | **125 / 54 / 20** |
+| **this one** | Windows 11 / x86-64, host libm replaced | **153 / 26 / 20** |
 
 ## Documentation
 
@@ -151,6 +177,7 @@ inside one tree.
 | [`STATUS.md`](STATUS.md) | what is done, what remains, how to resume |
 | [`POW_FMA_EXACTNESS.md`](POW_FMA_EXACTNESS.md) | how far the deterministic `pow` is bit-exact, and the limits of that claim |
 | [`evidence/windows-x86_64-ucrt/`](evidence/windows-x86_64-ucrt/) | raw artefacts behind every number above |
+| [`crates/sundials_core/src/sundials_libm.rs`](crates/sundials_core/src/sundials_libm.rs) | the deterministic libm: why it exists, what glibc runs on x86-64, provenance per routine |
 
 ## Licence
 
@@ -158,12 +185,21 @@ Derivative work of SUNDIALS, **BSD-3-Clause**, Copyright © 2002–2026
 Lawrence Livermore National Security, Southern Methodist University,
 University of Maryland Baltimore County and the SUNDIALS contributors.
 
-The deterministic `pow` in `crates/sundials_core/src/sundials_math.rs` is a
-pure-Rust port of the ARM optimized-routines `pow` (taken via musl's
-`src/math/pow.c`, `pow_data.c` and `exp_data.c`), **MIT**, Copyright © 2018
-Arm Limited. It is not an ARM-specific routine — it is host-independent
-Rust, used here precisely *because* the host libm on this platform is not
-the one the references came from.
+**This tree is mixed-licence.** The deterministic `pow` in
+`crates/sundials_core/src/sundials_math.rs`, and `sundials_libm/exp.rs` and
+`log.rs`, are pure-Rust ports of ARM optimized-routines code taken via musl,
+**MIT**, Copyright © 2018 Arm Limited. The other six modules of
+`sundials_libm` — `expm1`, `log1p`, `sincos`, `atan`, `asincos`,
+`hyperbolic` — are translations of **glibc 2.39** and are therefore
+**LGPL-2.1-or-later**, Copyright © The Free Software Foundation, with
+portions from the IBM Accurate Mathematical Library, Copyright ©
+International Business Machines Corp.
+
+BSD-3-Clause and MIT are both LGPL-compatible, so the combined work is
+distributable — but a binary linking those six modules must satisfy
+LGPL-2.1-or-later. They are confined to one directory, each carries its own
+`SPDX-License-Identifier`, and removing them costs byte-identical output,
+not correctness. `NOTICE` opens with the full position.
 
 Not an LLNL product; not endorsed by the SUNDIALS project. See `sundials.md`
 §8 and `NOTICE`.

@@ -8,11 +8,13 @@ where the translation was done — all 141 modules are complete.
 The per-example **verification** annotations are not platform-neutral: every
 "verified" mark and every parenthesised `ref-libm` diagnosis below was made
 *on macOS/arm64 against Apple's libm*. On this repository's target
-(Windows 11 / x86-64 / UCRT) the gate is **125 IDENTICAL / 54 divergent /
-20 excluded**. Do not read a "verified" mark here as a Windows result: the
+(Windows 11 / x86-64, host libm replaced) the gate is **153 IDENTICAL / 26
+divergent / 20 excluded**, the same as the Linux sibling and on the same
+variants. Do not read a "verified" mark here as a Windows result: the
 `ref-libm` lines — `idaFoodWeb_bnd`, `idasFoodWeb_bnd`, `idasSlCrank_dns`
-among them — describe an Apple-libm discrepancy that does not exist against
-glibc but *does* exist, differently, against the Microsoft UCRT. Part A of
+among them — describe an Apple-libm discrepancy that does not arise here,
+because this port evaluates those functions through its own glibc-equivalent
+`sundials_libm` rather than through any host libm. Part A of
 `VERIFICATION.md` is the authoritative per-variant result for this
 repository.
 

@@ -30,7 +30,9 @@ set -u
 cd "$(dirname "$0")/.."
 WS_ROOT="$(pwd)"
 LOGS="$WS_ROOT/logs"
-ORACLE_DIR="$LOGS/oracle"
+# Output/inputs directory; override to keep an out-of-sample corpus
+# separate from the one the routines were developed against.
+ORACLE_DIR="${SUNDIALS_ORACLE_OUT:-$LOGS/oracle}"
 mkdir -p "$ORACLE_DIR"
 LOG="$LOGS/libm_differential_win.log"
 DISTRO="${SUNDIALS_WSL_DISTRO:-Ubuntu-24.04}"
@@ -61,9 +63,11 @@ if [ -n "$FNS" ]; then
   fi
   GUEST_DIR="/tmp/sundials_libm_oracle"
   WIN_WS_GUEST="$(printf '%s' "$WS_ROOT" | sed -e 's|^/\([a-zA-Z]\)/|/mnt/\1/|')"
+  WIN_ORACLE_GUEST="$(printf '%s' "$ORACLE_DIR" | sed -e 's|^/\([a-zA-Z]\)/|/mnt/\1/|')"
   say "-- building the oracle in WSL guest '$DISTRO' --"
   wsl.exe -d "$DISTRO" -- bash -lc "
     set -e
+    mkdir -p $GUEST_DIR
     mkdir -p $GUEST_DIR
     cp '$WIN_WS_GUEST/tools/libm_oracle.c' $GUEST_DIR/
     cc -O2 -o $GUEST_DIR/libm_oracle $GUEST_DIR/libm_oracle.c -lm
@@ -73,7 +77,7 @@ if [ -n "$FNS" ]; then
   for fn in $FNS; do
     say "generating $fn ..."
     wsl.exe -d "$DISTRO" -- bash -lc \
-      "$GUEST_DIR/libm_oracle $fn $N > '$WIN_WS_GUEST/logs/oracle/$fn.bin'" \
+      "$GUEST_DIR/libm_oracle $fn $N > '$WIN_ORACLE_GUEST/$fn.bin'" \
       2>&1 | grep -E 'results, input hash' | tee -a "$LOG"
   done
   say ""

@@ -15,13 +15,14 @@
 //!
 //! The split is exact, and worth knowing precisely:
 //!
-//! * **Host-dependent** — [`sundials_math::SUNRexp`], `arkode_lsrkstep`'s
-//!   `SUNRlog`/`SUNRsinh`/`SUNRcosh`/`SUNRacosh`, and every `sin`, `cos`,
-//!   `asin`, `acos`, `atan`, `exp` and `ln` in the examples. These are `f64`
-//!   methods of *unspecified precision*: Rust `std` documents them as varying
-//!   by platform, and forwards them to the host libm. One ulp of disagreement
-//!   forks an adaptive integrator's step-size trajectory, and with it the
-//!   printed output.
+//! * **Host-dependent** — nothing, any more. [`sundials_math::SUNRexp`],
+//!   `arkode_lsrkstep`'s `SUNRlog`/`SUNRsinh`/`SUNRcosh`/`SUNRacosh`, and
+//!   every `sin`, `cos`, `asin`, `acos`, `atan`, `exp` and `ln` in the
+//!   examples used to be `f64` methods of *unspecified precision*, which Rust
+//!   `std` forwards to the host libm; one ulp of disagreement forks an
+//!   adaptive integrator's step-size trajectory and with it the printed
+//!   output. They now go through [`sundials_libm`], which reproduces what
+//!   glibc 2.39 runs on x86-64 and is measured bit-identical against it.
 //! * **Host-independent** — [`sundials_math::SUNRpowerR`], which runs a
 //!   ported ARM optimized-routines/musl algorithm and never calls the host
 //!   libm; and [`sundials_math::SUNRsqrt`], [`sundials_math::SUNRceil`],

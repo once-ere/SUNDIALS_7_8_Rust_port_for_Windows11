@@ -14,11 +14,14 @@ reference examples, not "close enough".
 > **Every numerical claim for *this* repository was established on Windows 11
 > Pro for Workstations 10.0.26200 (25H2), x86-64, `ucrtbase.dll`
 > 10.0.26100.8521, rustc 1.91.1, target `x86_64-pc-windows-msvc`.** The
-> current gate is **125 IDENTICAL / 54 divergent / 20 excluded**, 0 port
-> defects identified — that is *not* a byte-identity pass, and the reason is
-> the host libm, not the translation. The deterministic `pow` *is* bit-exact
-> against a glibc oracle over 25.9 million measured inputs. The authoritative
-> statements are in [`current_status.md`](current_status.md),
+> current gate is **153 IDENTICAL / 26 divergent / 20 excluded**, 0 port
+> defects identified — the Linux sibling's result, on exactly its set of
+> divergent variants, all of which it proved reference-side against a
+> pristine C build. The host libm has been removed from the port: the
+> deterministic `pow` and the twelve `sundials_libm` routines are bit-exact
+> against a glibc oracle over 25.9 million and 96 million measured inputs
+> respectively. The authoritative statements are in
+> [`current_status.md`](current_status.md),
 > [`README.md`](README.md) and **Part A** of
 > [`VERIFICATION.md`](VERIFICATION.md).
 >
@@ -41,10 +44,13 @@ reference examples, not "close enough".
 > and forwards to the **host** libm. The upstream references were generated
 > on glibc; this target's host libm is the Microsoft UCRT, and
 > `tools/libm_fingerprint_win.sh` shows **every one of those ten functions
-> disagrees with glibc**. That, and nothing else, is why the gate reads 125
-> rather than the Linux sibling's 153. `pow` is the one function taken off
-> the host (§5, §8), and on this platform that substitution is load-bearing:
-> the UCRT `pow` differs from the ported one on 1 domain input in 1,198. `sqrt`, `mul_add`, `ceil`, `round`, `abs` and `copysign`
+> disagrees with glibc**. That is why this port does not use them: all ten,
+> plus `expm1` and `log1p`, are implemented in
+> `crates/sundials_core/src/sundials_libm/` as translations of what glibc
+> 2.39 runs on x86-64, each measured 0 mismatches over 8,000,000 inputs
+> against a glibc oracle. `pow` was taken off the host first and separately
+> (§5, §8). With the host libm in the path the gate read 125; with it gone it
+> reads **153 / 26 / 20**, the Linux sibling's result on the same variants. `sqrt`, `mul_add`, `ceil`, `round`, `abs` and `copysign`
 > are IEEE-754 specified and identical on every target — they are not part of
 > the problem, and must not be described as if they were.
 >
@@ -63,7 +69,8 @@ reference examples, not "close enough".
 | Version | tracks upstream 7.8.0 (`SUNDIALS_VERSION` = `"7.8.0"`) |
 | Conditional compilation | none — 0 `cfg(target_os)`, 0 `cfg(target_arch)` in the tree |
 | Measured platform | **Windows 11 on Intel/AMD x86-64**, `ucrtbase.dll` 10.0.26100.8521, rustc 1.91.1 (Windows 11 Pro for Workstations 25H2) |
-| Example gate here | 125 IDENTICAL / 54 divergent / 20 excluded; byte-identity is **not** claimed — see `current_status.md` §§4–5 |
+| Host libm dependence | none — `sundials_libm` implements `exp`, `log`, `expm1`, `log1p`, `sin`, `cos`, `atan`, `asin`, `acos`, `sinh`, `cosh`, `acosh`; `sundials_math` implements `pow`. Only IEEE-754-specified `f64` operations remain host calls |
+| Example gate here | 153 IDENTICAL / 26 divergent / 20 excluded, the 26 identical to the Linux sibling's set — see `current_status.md` §3 |
 | Other platforms | builds and unit-tests anywhere Rust targets; the Linux sibling reaches 153 / 26 / 20 on glibc and the macOS one 127 / 52 / 20 on Apple libm, from the same crate tree |
 
 Roughly 192k lines of Rust across 141 modules, plus 108 translated example
@@ -581,12 +588,13 @@ elsewhere, three things must be redone on the target platform:
    re-measuring against an oracle built natively for *that* target rather
    than trusting the arm64 measurements.
 
-   *Status on Windows:* done for `pow` (§0 of `POW_FMA_EXACTNESS.md`), open
-   for the other ten. A fresh count on this tree gives **9** host-libm call
-   sites in library code (5 `exp`, and `ln`/`sinh`/`cosh`/`acosh` in
-   `arkode_lsrkstep.rs`) and **191** in the examples (`sin` 53, `cos` 44,
-   `exp` 59, `ln` 12, `atan` 24, `acos` 5, `asin` 3).
-   `current_status.md` §5 turns that into a per-routine work list.
+   *Status on Windows:* **done.** `pow` first (§0 of
+   `POW_FMA_EXACTNESS.md`), then `exp`, `log`, `expm1`, `log1p`, `sin`,
+   `cos`, `atan`, `asin`, `acos`, `sinh`, `cosh` and `acosh` in
+   `crates/sundials_core/src/sundials_libm/`. All 218 call sites — 9 in
+   library code, 209 in the examples — were rewired by
+   `tools/route_libm_calls.py`, and no host libm method is reachable from
+   the port any more. `current_status.md` §2 is the record.
 2. **Re-run and re-classify the gate.** The 52 documented exceptions of §6b
    are Apple-libm diagnoses. On another host a different set of variants
    diverges; each one must be root-caused against a pristine upstream C binary

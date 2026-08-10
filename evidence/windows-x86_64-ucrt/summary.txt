@@ -3,11 +3,11 @@ cvAdvDiff_bnd                            []  IDENTICAL
 cvAnalytic_mels                          []  IDENTICAL
 cvDirectDemo_ls                          []  IDENTICAL
 cvDisc_dns                               []  IDENTICAL
-cvDiurnal_kry_bp                         []  DIFF(58 lines)
-cvDiurnal_kry                            []  DIFF(42 lines)
-cvKrylovDemo_ls                          []  DIFF(124 lines)
-cvKrylovDemo_ls                          [1]  DIFF(124 lines)
-cvKrylovDemo_ls                          [2]  DIFF(124 lines)
+cvDiurnal_kry_bp                         []  IDENTICAL
+cvDiurnal_kry                            []  IDENTICAL
+cvKrylovDemo_ls                          []  IDENTICAL
+cvKrylovDemo_ls                          [1]  IDENTICAL
+cvKrylovDemo_ls                          [2]  IDENTICAL
 cvKrylovDemo_prec                        []  IDENTICAL
 cvParticle_dns                           []  IDENTICAL
 cvPendulum_dns                           []  DIFF(10 lines)
@@ -17,7 +17,7 @@ cvRoberts_dns_negsol                     []  DIFF(2 lines)
 cvRoberts_dns_uw                         []  IDENTICAL
 cvRocket_dns                             []  IDENTICAL
 cvVdp_auto_nls                           []  IDENTICAL
-cvKrylovDemo_ls                          [0 1]  DIFF(44 lines)
+cvKrylovDemo_ls                          [0 1]  IDENTICAL
 cvAdvDiff_bndL                           []  IDENTICAL
 cvRoberts_dnsL                           []  DIFF(16 lines)
 cvRoberts_block_klu                      []  EXCLUDED excluded(klu)
@@ -31,16 +31,16 @@ cvsAdvDiff_bnd                           []  IDENTICAL
 cvsAnalytic_mels                         []  IDENTICAL
 cvsAnalytic_mels                         [cvodes.max_order 3]  IDENTICAL
 cvsDirectDemo_ls                         []  IDENTICAL
-cvsDiurnal_FSA_kry                       [-sensi sim t]  DIFF(104 lines)
-cvsDiurnal_FSA_kry                       [-sensi stg t]  DIFF(92 lines)
-cvsDiurnal_kry                           []  DIFF(42 lines)
-cvsDiurnal_kry_bp                        []  DIFF(58 lines)
+cvsDiurnal_FSA_kry                       [-sensi sim t]  IDENTICAL
+cvsDiurnal_FSA_kry                       [-sensi stg t]  IDENTICAL
+cvsDiurnal_kry                           []  IDENTICAL
+cvsDiurnal_kry_bp                        []  IDENTICAL
 cvsFoodWeb_ASAi_kry                      []  IDENTICAL
 cvsFoodWeb_ASAp_kry                      []  IDENTICAL
 cvsHessian_ASA_FSA                       []  IDENTICAL
-cvsKrylovDemo_ls                         []  DIFF(149 lines)
-cvsKrylovDemo_ls                         [1]  DIFF(149 lines)
-cvsKrylovDemo_ls                         [2]  DIFF(149 lines)
+cvsKrylovDemo_ls                         []  DIFF(25 lines)
+cvsKrylovDemo_ls                         [1]  DIFF(25 lines)
+cvsKrylovDemo_ls                         [2]  DIFF(25 lines)
 cvsKrylovDemo_prec                       []  IDENTICAL
 cvsLotkaVolterra_ASA                     []  IDENTICAL
 cvsParticle_dns                          []  IDENTICAL
@@ -54,7 +54,7 @@ cvsRoberts_FSA_dns_constraints           [-sensi stg1 t]  IDENTICAL
 cvsRoberts_dns                           []  IDENTICAL
 cvsRoberts_dns_constraints               []  IDENTICAL
 cvsRoberts_dns_uw                        []  IDENTICAL
-cvsKrylovDemo_ls                         [0 1]  DIFF(782 lines)
+cvsKrylovDemo_ls                         [0 1]  DIFF(738 lines)
 cvsAdvDiff_bndL                          []  IDENTICAL
 cvsRoberts_dnsL                          []  DIFF(32 lines)
 cvsRoberts_ASAi_klu                      []  EXCLUDED excluded(klu)
@@ -89,8 +89,8 @@ kinRoboKin_slu                           []  EXCLUDED excluded(superlu)
 ### ida_rs ###
 idaAnalytic_mels                         []  IDENTICAL
 idaAnalytic_mels                         [ida.scalar_tolerances 1e-3 1e-8]  IDENTICAL
-idaFoodWeb_bnd                           []  DIFF(4 lines)
-idaFoodWeb_kry                           []  DIFF(4 lines)
+idaFoodWeb_bnd                           []  IDENTICAL
+idaFoodWeb_kry                           []  IDENTICAL
 idaHeat2D_bnd                            []  IDENTICAL
 idaHeat2D_kry                            []  IDENTICAL
 idaKrylovDemo_ls                         []  IDENTICAL
@@ -106,7 +106,7 @@ idasAkzoNob_ASAi_dns                     []  DIFF(3 lines)
 idasAkzoNob_dns                          []  IDENTICAL
 idasAnalytic_mels                        []  IDENTICAL
 idasAnalytic_mels                        [idas.init_step 1e-5]  IDENTICAL
-idasFoodWeb_bnd                          []  DIFF(4 lines)
+idasFoodWeb_bnd                          []  IDENTICAL
 idasHeat2D_bnd                           []  IDENTICAL
 idasHeat2D_kry                           []  IDENTICAL
 idasHessian_ASA_FSA                      []  IDENTICAL
@@ -116,8 +116,8 @@ idasKrylovDemo_ls                        [2]  IDENTICAL
 idasRoberts_ASAi_dns                     []  IDENTICAL
 idasRoberts_FSA_dns                      [-sensi stg t]  IDENTICAL
 idasRoberts_dns                          []  IDENTICAL
-idasSlCrank_dns                          []  DIFF(2 lines)
-idasSlCrank_FSA_dns                      []  DIFF(18 lines)
+idasSlCrank_dns                          []  IDENTICAL
+idasSlCrank_FSA_dns                      []  IDENTICAL
 idasRoberts_ASAi_klu                     []  EXCLUDED excluded(klu)
 idasRoberts_FSA_klu                      [-sensi stg t]  EXCLUDED excluded(klu)
 idasRoberts_klu                          []  EXCLUDED excluded(klu)
@@ -128,10 +128,10 @@ idasRoberts_sps                          []  EXCLUDED excluded(superlu)
 ark_analytic                             []  IDENTICAL
 ark_analytic                             [arkode.scalar_tolerances 1e-6 1e-8 arkode.table_names ARKODE_ESDIRK547L2SA_7_4_5 ARKODE_ERK_NONE]  IDENTICAL
 ark_advection_diffusion_reaction_splitting []  IDENTICAL
-ark_analytic_lsrk                        []  DIFF(16 lines)
-ark_analytic_lsrk_varjac                 []  DIFF(24 lines)
-ark_analytic_lsrk_domeigest              []  DIFF(28 lines)
-ark_analytic_lsrk_domeigest              [arkid.dom_eig_est_init_preprocess_iters 1 sundomeigestimator.max_iters 1]  DIFF(28 lines)
+ark_analytic_lsrk                        []  IDENTICAL
+ark_analytic_lsrk_varjac                 []  IDENTICAL
+ark_analytic_lsrk_domeigest              []  IDENTICAL
+ark_analytic_lsrk_domeigest              [arkid.dom_eig_est_init_preprocess_iters 1 sundomeigestimator.max_iters 1]  IDENTICAL
 ark_analytic_mels                        []  IDENTICAL
 ark_analytic_nonlin                      []  IDENTICAL
 ark_analytic_partitioned                 [forcing]  DIFF(84 lines)
@@ -139,7 +139,7 @@ ark_analytic_partitioned                 [splitting]  DIFF(84 lines)
 ark_analytic_partitioned                 [splitting ARKODE_SPLITTING_BEST_2_2_2]  DIFF(84 lines)
 ark_analytic_partitioned                 [splitting ARKODE_SPLITTING_RUTH_3_3_2]  DIFF(84 lines)
 ark_analytic_partitioned                 [splitting ARKODE_SPLITTING_YOSHIDA_8_6_2]  DIFF(84 lines)
-ark_analytic_ssprk                       []  DIFF(6 lines)
+ark_analytic_ssprk                       []  IDENTICAL
 ark_brusselator_1D_mri                   []  IDENTICAL
 ark_brusselator_fp                       []  IDENTICAL
 ark_brusselator_lsrk_domeigest           []  IDENTICAL
@@ -154,13 +154,13 @@ ark_brusselator1D_imexmri                [5 0.001]  IDENTICAL
 ark_brusselator1D_imexmri                [6 0.001]  IDENTICAL
 ark_brusselator1D_imexmri                [7 0.001]  IDENTICAL
 ark_brusselator1D                        []  IDENTICAL
-ark_conserved_exp_entropy_ark            [1 0]  DIFF(48 lines)
-ark_conserved_exp_entropy_ark            [1 1]  DIFF(31 lines)
-ark_conserved_exp_entropy_erk            [1]  DIFF(48 lines)
+ark_conserved_exp_entropy_ark            [1 0]  IDENTICAL
+ark_conserved_exp_entropy_ark            [1 1]  DIFF(1 lines)
+ark_conserved_exp_entropy_erk            [1]  IDENTICAL
 ark_damped_harmonic_symplectic           []  DIFF(26 lines)
-ark_dissipated_exp_entropy               [1 0]  DIFF(82 lines)
+ark_dissipated_exp_entropy               [1 0]  IDENTICAL
 ark_dissipated_exp_entropy               [1 1]  DIFF(1 lines)
-ark_harmonic_symplectic                  []  DIFF(28 lines)
+ark_harmonic_symplectic                  []  DIFF(26 lines)
 ark_heat1D_adapt                         []  IDENTICAL
 ark_heat1D                               []  IDENTICAL
 ark_kepler                               [--stepper ERK --step-mode adapt]  IDENTICAL
@@ -176,18 +176,18 @@ ark_kepler                               [--stepper SPRK --step-mode fixed --met
 ark_kepler                               [--stepper SPRK --step-mode fixed --method ARKODE_SPRK_RUTH_3_3 --tf 50 --check-order --nout 1]  DIFF(242 lines)
 ark_kepler                               [--stepper SPRK --step-mode fixed --method ARKODE_SPRK_YOSHIDA_6_8 --tf 50 --check-order --nout 1]  IDENTICAL
 ark_kepler                               []  DIFF(26 lines)
-ark_kpr_mri                              [0 1 0.005]  DIFF(4 lines)
+ark_kpr_mri                              [0 1 0.005]  IDENTICAL
 ark_kpr_mri                              [1 0 0.01]  IDENTICAL
 ark_kpr_mri                              [1 1 0.002]  IDENTICAL
 ark_kpr_mri                              [2 4 0.002]  IDENTICAL
 ark_kpr_mri                              [3 2 0.001]  IDENTICAL
 ark_kpr_mri                              [4 3 0.001]  IDENTICAL
-ark_kpr_mri                              [5 4 0.001]  DIFF(8 lines)
-ark_kpr_mri                              [6 5 0.001]  DIFF(14 lines)
+ark_kpr_mri                              [5 4 0.001]  IDENTICAL
+ark_kpr_mri                              [6 5 0.001]  IDENTICAL
 ark_kpr_mri                              [7 2 0.002]  IDENTICAL
-ark_kpr_mri                              [8 3 0.001 -100 100 0.5 1]  DIFF(2 lines)
+ark_kpr_mri                              [8 3 0.001 -100 100 0.5 1]  IDENTICAL
 ark_kpr_mri                              [9 3 0.001 -100 100 0.5 1]  IDENTICAL
-ark_kpr_mri                              [10 4 0.001 -100 100 0.5 1]  DIFF(26 lines)
+ark_kpr_mri                              [10 4 0.001 -100 100 0.5 1]  IDENTICAL
 ark_kpr_mri                              [11 2 0.001]  IDENTICAL
 ark_kpr_mri                              [12 3 0.005]  IDENTICAL
 ark_kpr_mri                              [13 4 0.01]  IDENTICAL

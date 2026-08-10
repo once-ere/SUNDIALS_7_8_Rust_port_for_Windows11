@@ -15,18 +15,20 @@ platform-neutral.) Two consequences bind everything below:
   `cfg(target_arch)` in the tree and none may be added. A port for another
   platform is a separate repository, so that "what was verified, and where"
   is a property of the repository rather than of a build flag.
-* **Host libm is an input, not an implementation detail.** `sunrealtype`
-  arithmetic is IEEE-754 and reproducible everywhere, but `SUNRsqrt`,
-  `SUNRexp`, `SUNRceil`, `SUNRround` and every `sin`/`cos`/`exp`/`log` in the
-  examples go through `f64`'s methods, which Rust `std` forwards to the host
-  libm. Only `SUNRpowerR` was taken off the host libm (`pow_glibc` in
-  `sundials_math.rs`). Every deviation class below was argued unobservable
-  *on the platform where it was argued*; that argument does not
-  automatically survive a change of libm, and on this target it does not:
-  the Microsoft UCRT disagrees with glibc on every transcendental the port
-  touches (`tools/libm_fingerprint_win.sh`), which is why the example gate
-  here is 125 / 54 / 20 rather than the Linux sibling's 153 / 26 / 20. See
-  `current_status.md` §§4–5.
+* **The host libm is not an input any more.** `sunrealtype` arithmetic is
+  IEEE-754 and reproducible everywhere, and every transcendental the library
+  and the examples evaluate now goes through
+  `crates/sundials_core/src/sundials_libm/` — a translation of what glibc
+  2.39 runs on x86-64, measured bit-identical against a real glibc oracle
+  over 96,000,000 inputs. `SUNRpowerR` was taken off the host first
+  (`pow_glibc` in `sundials_math.rs`); the other twelve routines followed.
+  `f64::sqrt`, `mul_add`, `abs`, `copysign`, `floor`, `ceil`, `round` and
+  `trunc` remain host calls and are meant to: IEEE-754 specifies them.
+  **Contract: no code under `crates/*/src` or `crates/*/examples` may call a
+  host libm method outside `sundials_libm` itself.** Every deviation class
+  below was argued unobservable on the platform where it was argued; that
+  argument survives a change of *host* libm now, because there is no longer a
+  host libm in the path. See `current_status.md` §2.
 
 ## Crate graph
 

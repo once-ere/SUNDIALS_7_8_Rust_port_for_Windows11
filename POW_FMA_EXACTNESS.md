@@ -105,16 +105,17 @@ measured inputs is strong evidence, not proof), other glibc versions (the
 oracle is 2.39 only), Windows on ARM, and anything about the *other* libm
 functions.
 
-That last exclusion is much more serious on Windows than it was on Linux,
-and it must not be read as a footnote. `pow` is the **only** libm routine
-this port has taken off the host. `sin`, `cos`, `exp`, `ln`, `asin`, `acos`,
-`atan`, `sinh`, `cosh` and `acosh` still come from the Microsoft UCRT, and
-`tools/libm_fingerprint_win.sh` shows every one of them disagrees with
-glibc. A bit-exact `pow` therefore buys correctness in the step-size
-controllers — where `SUNRpowerR` lives, and where a 1-ulp error compounds
-across every step of every adaptive integrator — but it does not by itself
-buy byte-identical example output. See `current_status.md` §5 for what
-would.
+On the last of those: `pow` is no longer the only libm routine this port has
+taken off the host, and it was never going to be enough on its own. A
+bit-exact `pow` buys correctness where it compounds — `SUNRpowerR` lives in
+the step-size controllers, so a 1-ulp error there forks every subsequent step
+— but the examples and the LSRK path also evaluate `sin`, `cos`, `exp`, `ln`,
+`asin`, `acos`, `atan`, `sinh`, `cosh` and `acosh`, and with those still
+coming from the Microsoft UCRT the gate sat at 125 of 199 variants. All
+twelve now live in `crates/sundials_core/src/sundials_libm/`, measured the
+same way and by the same method as `pow` — 0 mismatches over 8,000,000 inputs
+each against a glibc oracle — and the gate reads 153 / 26 / 20. This document
+remains specifically about `pow`; `current_status.md` §2 covers the rest.
 
 ---
 
@@ -296,4 +297,4 @@ gate, which is blind to it.
 | Bit-exact across the domain SUNDIALS evaluates? | **Yes** — 0 mismatches over 5.9M inputs, on Windows and on Linux. The host UCRT `pow` is *not*: it differs from this routine on 4,926 of those same inputs. |
 | Does any of this change the 199-variant gate? | No. The §2 defect was latent; §0 changed no variant either. |
 | On which platform was this measured? | §0: Windows 11 / x86-64, natively built and run, against a glibc 2.39 oracle from a WSL2 guest. §0.1: Linux / glibc 2.39 / x86-64, native (inherited). §§1–7: macOS on Apple Silicon (arm64). |
-| Does an exact `pow` make the port's output byte-identical? | **No, and on this platform that gap is large.** `pow` is the only libm function taken off the host; `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `acosh`, `exp` and `ln` still come from the Microsoft UCRT, which disagrees with glibc on every one of them. The gate here is 125 IDENTICAL against the Linux sibling's 153 from the same Rust source. What an exact `pow` does buy is correctness where it compounds — the step-size controllers — and it is the precondition for the remaining routines, not a substitute for them. See `current_status.md` §5. |
+| Does an exact `pow` make the port's output byte-identical? | **Not on its own.** With `pow` the only routine taken off the host, the Windows gate sat at 125 IDENTICAL against the Linux sibling's 153, because `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `acosh`, `exp` and `ln` still came from the Microsoft UCRT, which disagrees with glibc on every one of them. What an exact `pow` buys is correctness where it compounds — the step-size controllers — and the method for the rest. All twelve of those now live in `crates/sundials_core/src/sundials_libm/`, measured the same way, and the gate reads 153 / 26 / 20. See `current_status.md` §2. |

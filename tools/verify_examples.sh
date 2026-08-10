@@ -11,19 +11,20 @@
 #   Reference .out files are read from
 #   $SUNDIALS_C_TREE/examples/<solver>/<serial dir>/.
 #
-#   It executes on any POSIX host meeting those requirements, but its
-#   VERDICTS are platform-bound. The port takes sin, cos, asin, acos, atan,
-#   sinh, cosh, acosh, exp and ln from the host libm (only `pow` was made
-#   host-independent; sqrt/mul_add/ceil/round are IEEE-exact and portable).
-#   The upstream references were generated on glibc; this host is the
-#   Microsoft UCRT, which tools/libm_fingerprint_win.sh shows disagrees with
-#   glibc on every one of those ten. Current result: 125 IDENTICAL / 54
-#   divergent / 20 excluded, 0 port defects identified — against 153 / 26 /
-#   20 for the Linux sibling running the identical Rust source, and 127 /
-#   52 / 20 on macOS/arm64. Never close a divergence by tuning an example,
-#   and never widen noise_filter() to swallow last-ulp drift.
-#   tools/classify_diffs.sh is the second pass over the 54. See
-#   current_status.md §§3-5.
+#   It executes on any POSIX host meeting those requirements. The upstream
+#   references were generated on glibc, and this host's libm is the Microsoft
+#   UCRT, which tools/libm_fingerprint_win.sh shows disagrees with glibc on
+#   every transcendental the port evaluates. That is why the port no longer
+#   calls it: sundials_libm implements exp, log, expm1, log1p, sin, cos,
+#   atan, asin, acos, sinh, cosh and acosh, and sundials_math implements pow,
+#   each measured bit-identical against a glibc oracle. Only IEEE-754-exact
+#   f64 operations (sqrt, mul_add, ceil, round, abs, copysign) remain host
+#   calls. Current result: 153 IDENTICAL / 26 divergent / 20 excluded, 0 port
+#   defects identified — the same as the Linux sibling, on the same 26
+#   variants, against 127 / 52 / 20 on macOS/arm64. Never close a divergence
+#   by tuning an example, and never widen noise_filter() to swallow last-ulp
+#   drift. tools/classify_diffs.sh is the second pass over the 26. See
+#   current_status.md §§2-3.
 #
 #   list        print every (crate, example, args, outfile, status) variant
 #               tuple for all crates, tab-separated — used to (re)generate
