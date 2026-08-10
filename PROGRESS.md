@@ -1,6 +1,6 @@
 # PROGRESS — per-file port checklist
 
-Project: **SUNDIALS_7_8_Rust_port_for_Linux**. The per-file port status
+Project: **SUNDIALS_7_8_Rust_port_for_Windows11**. The per-file port status
 (ported / building / committed) below is platform-neutral and is inherited
 verbatim from the sibling `SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos`,
 where the translation was done — all 141 modules are complete.
@@ -8,12 +8,13 @@ where the translation was done — all 141 modules are complete.
 The per-example **verification** annotations are not platform-neutral: every
 "verified" mark and every parenthesised `ref-libm` diagnosis below was made
 *on macOS/arm64 against Apple's libm*. On this repository's target
-(Linux / x86-64 / glibc) the gate is **153 IDENTICAL / 26 reference-side /
-20 excluded**; several `ref-libm` lines here — `idaFoodWeb_bnd`,
-`idasFoodWeb_bnd`, `idasSlCrank_dns` among them — are **byte-identical on
-Linux**, because the Apple `sin` discrepancy they describe does not exist
-against glibc. Part A of `VERIFICATION.md` is the authoritative per-variant
-result for this repository.
+(Windows 11 / x86-64 / UCRT) the gate is **125 IDENTICAL / 54 divergent /
+20 excluded**. Do not read a "verified" mark here as a Windows result: the
+`ref-libm` lines — `idaFoodWeb_bnd`, `idasFoodWeb_bnd`, `idasSlCrank_dns`
+among them — describe an Apple-libm discrepancy that does not exist against
+glibc but *does* exist, differently, against the Microsoft UCRT. Part A of
+`VERIFICATION.md` is the authoritative per-variant result for this
+repository.
 
 Status legend: todo | ported | building | committed
 (impl headers and public include/ headers port together with their module and share its line)

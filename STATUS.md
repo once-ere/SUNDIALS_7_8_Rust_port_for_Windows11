@@ -1,20 +1,24 @@
 # STATUS — inherited macOS/arm64 status record
 
-Project: **SUNDIALS_7_8_Rust_port_for_Linux** — but this file is the sibling
+Project: **SUNDIALS_7_8_Rust_port_for_Windows11** — but this file is the
 macOS port's status record, kept because it documents how the translation
 was finished phase by phase.
 
 > **For this repository's status read [`current_status.md`](current_status.md).**
-> Linux / x86-64 / glibc results: `cargo build --workspace` 0 warnings,
-> `cargo test --workspace --lib` 25 passed, deterministic `pow` 0 mismatches
-> over 25.9M inputs against the native glibc `pow`, and the example gate at
-> **153 IDENTICAL / 26 reference-side / 20 excluded**, 0 port defects.
+> Windows 11 / x86-64 / UCRT results: `cargo build --workspace` 0 errors and
+> 0 warnings, `cargo test --workspace --lib` 28 passed, the deterministic
+> `pow` 0 mismatches over 25.9M inputs against a **glibc** oracle (while the
+> host UCRT `pow` differs from it on 1 domain input in 1,198), all 108
+> example programs building and running, and the example gate at
+> **125 IDENTICAL / 54 divergent / 20 excluded**, 0 port defects identified.
+> That gate is *not* a pass against the 100 % byte-identity target, and the
+> reason is the host libm — see `current_status.md` §§4–5.
 
-The port is finished. All eight phases are done, every crate is verified
-against the upstream reference outputs, and the cumulative gate passes.
-For the public guide read `sundials.md`; for per-variant evidence
-`VERIFICATION.md` (Part A is Linux, Part B the inherited macOS record); for
-per-file status `PROGRESS.md`.
+The *translation* is finished. All eight phases are done and every crate
+was verified against the upstream reference outputs on the platform this
+record describes. For the public guide read `sundials.md`; for per-variant
+evidence `VERIFICATION.md` (Part A is Windows, Part B the inherited Linux
+record, Part C the inherited macOS one); for per-file status `PROGRESS.md`.
 
 > ## ⚠ Platform scope of the sections below
 >
@@ -22,12 +26,13 @@ per-file status `PROGRESS.md`.
 > on Apple Silicon (arm64), against Apple's libm, with the pristine upstream
 > C comparison binaries built by Apple clang.** The table below, the
 > cold-tree bullets and the 52 documented divergences are results on that
-> platform. On Linux/glibc/x86-64 the corresponding tally is 153 / 26 / 20 —
-> 26 of those 52 are byte-identical here.
+> platform. On Linux/glibc/x86-64 the corresponding tally is 153 / 26 / 20;
+> on Windows/UCRT/x86-64, this repository's target, it is 125 / 54 / 20.
 >
 > The sources are portable — `std` only, no `unsafe`, no FFI, no
-> `cfg(target_os)`/`cfg(target_arch)` — and build warning-free and pass all 25
-> unit tests elsewhere. Only the **output** claims are platform-bound,
+> `cfg(target_os)`/`cfg(target_arch)` — and build warning-free and pass all
+> unit tests elsewhere (28 on Windows, which adds two host-comparison
+> tests). Only the **output** claims are platform-bound,
 > because `sin`, `cos`, `exp`, `ln` and the inverse/hyperbolic functions come
 > from the host libm; `pow` alone was made host-independent. `README.md`
 > § "Platform scope" and `sundials.md`

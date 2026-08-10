@@ -1,46 +1,57 @@
-# SUNDIALS_7_8_Rust_port_for_Linux — workspace rules
+# SUNDIALS_7_8_Rust_port_for_Windows11 — workspace rules
 
-Pure-Rust port of SUNDIALS 7.8.0. The upstream C tree is the parent
-directory (`../src/`, `../include/`, `../examples/`) and is **read-only**.
-This workspace is its own git repo; git is the undo mechanism.
+Pure-Rust port of SUNDIALS 7.8.0. The upstream C tree is **read-only** and
+lives *outside* this workspace, at `C:\Users\nsh\Developer\sundials-7.8.0`;
+the harness scripts take its location from `$SUNDIALS_C_TREE`. (The sibling
+ports keep the workspace inside that tree — this one does not, because it is
+its own repository under `.../github/`.) This workspace is its own git repo;
+git is the undo mechanism.
 
 Read `current_status.md` first — it is the resume anchor.
 
 ## Target platform — binding on every rule below
 
-**This port is scoped to Linux on Intel/AMD x86-64 with glibc**, measured on
-Ubuntu 24.04 / glibc 2.39 / gcc 13.3.0 / rustc 1.93.1. The Rust sources are
-portable (`std` only, no `cfg(target_os)`/`cfg(target_arch)`) and build and
-unit-test anywhere, but every *numerical* claim — byte-identical output, the
+**This port is scoped to Windows 11 on Intel/AMD x86-64**, measured on
+Windows 11 Pro for Workstations 10.0.26200 (25H2) / `ucrtbase.dll`
+10.0.26100.8521 / rustc 1.91.1 / target `x86_64-pc-windows-msvc`. The Rust
+sources are portable (`std` only, no `cfg(target_os)`/`cfg(target_arch)`)
+and build and unit-test anywhere, but every *numerical* claim — the
 199-variant gate, each per-variant classification in `VERIFICATION.md`, and
-the `pow` differential — is a glibc-on-x86-64 result.
+the `pow` differential — is a Windows-on-x86-64 result.
 
-**Verified coverage is glibc 2.36 through 2.41** (Debian 12, Ubuntu 24.04,
-Debian 13, Fedora 41): the full gate was re-run natively in those
-containers and gives the identical 153 / 26 / 20 variant set. On **Arch
-(glibc 2.44) three more variants diverge** — `ark_analytic_lsrk_domeigest`
-(x2) and `ark_analytic_lsrk_varjac` — because 2.44 changed `sinh`, `cosh`
-and `acosh`, which the library calls from exactly one place,
-`arkode_lsrkstep.rs:87`. Do **not** widen the claim to "any glibc": that
-was asserted once, and `tools/glibc_sweep.sh` disproved it. It does not
-carry to musl, to arm64, or to Windows.
+**This is the unfavourable platform, and saying so is part of the job.** The
+upstream reference `.out` files were generated on a glibc host, and `sin`,
+`cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `acosh`, `exp` and `ln`
+resolve to the host libm through `f64`'s unspecified-precision methods —
+here that is the Microsoft UCRT, and `tools/libm_fingerprint_win.sh` shows
+**every one of them disagrees with glibc**; only `sqrt` matches. So the gate
+stands at **125 IDENTICAL / 54 divergent / 20 excluded**, against 153 / 26 /
+20 for the Linux sibling running the identical Rust source. The 54 are a
+strict superset of that port's 26. Never present this port as
+byte-identical, and never close a divergence by tuning an example or
+widening `noise_filter()`.
 
-Why this platform is the favourable one: the upstream reference `.out` files
-were generated on a glibc host, and `sin`, `cos`, `asin`, `acos`, `atan`,
-`sinh`, `cosh`, `acosh`, `exp` and `ln` resolve to the host libm through
-`f64`'s unspecified-precision methods — so here they land on the very
-implementation the references came from. `pow` is additionally made
-host-independent (the ported ARM optimized-routines/musl algorithm in
-`sundials_math.rs`, which *is* glibc >= 2.28's `e_pow.c`) and is measured
-bit-exact against the native glibc `pow` by `tools/pow_differential.sh`.
-`sqrt`, `mul_add`, `ceil`, `round`, `abs` and `copysign` are IEEE-754
-specified and portable — do not list them as host-dependent.
+`pow` is the exception, and on this platform it is load-bearing: it is made
+host-independent by the ported ARM optimized-routines/musl algorithm in
+`sundials_math.rs`, which *is* glibc >= 2.28's `e_pow.c` and, on x86-64,
+the `__ieee754_pow_fma` build glibc dispatches to. It is measured **0
+mismatches over 25,900,000 inputs** against a real glibc oracle by
+`tools/pow_differential_win.sh`, while the UCRT `pow` this port refuses to
+call differs from it on 1 domain input in 1,198. `sqrt`, `mul_add`, `ceil`,
+`round`, `abs` and `copysign` are IEEE-754 specified and portable — do not
+list them as host-dependent.
+
+Closing the remaining gap means porting `exp`, `log`, `sin`, `cos`, `atan`,
+`asin`, `acos`, `sinh`, `cosh` and `acosh` the way `pow` was, each with its
+own glibc differential. `current_status.md` §5 is the specification for that
+work; keep it current.
 
 Any statement added to any document in this repo that asserts a verification
 result must carry that scope explicitly. Ports for other platforms are
-separate repositories (see the sibling
-`SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos`, from which this workspace's
-crate tree is inherited unchanged), never conditional compilation inside
+separate repositories (see the siblings
+`SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos`, from which this
+workspace's crate tree is inherited unchanged, and
+`SUNDIALS_7_8_Rust_port_for_Linux`), never conditional compilation inside
 this one.
 
 ## Hard rules
@@ -96,56 +107,62 @@ this one.
 
 ## Verification
 
-`tools/verify_examples.sh [crate|all|list]` parses the upstream
-CMakeLists tuples (199 variants), builds release examples, runs each
-variant with exact argv, diffs against `../examples/...` references
-(noise-filtered symmetrically), and writes `logs/summary.txt`. Read only
-the summary; open individual diffs only for non-IDENTICAL lines.
-CLI-option variants use bare `<solverid>.<key>` tokens (no leading
-dashes); the parser prefix-matches literally.
+Run the harness from **Git Bash / MSYS2** — it is POSIX `bash` and will not
+run under `cmd.exe` or PowerShell — and give it the upstream C tree:
 
-Current Linux/x86-64 gate: **153 IDENTICAL / 26 reference-side / 20
-excluded**, 0 port defects — where "0 port defects" is a measurement, not a
-judgement call: `tools/pristine_c_build.sh` builds the upstream C library
-and examples with cmake/gcc out of source, and `tools/compare_pristine_c.sh`
-(plus `tools/compare_lapack_substituted.sh` for the two `*L` examples) runs
-every divergent variant as Rust, as pristine C, and against the shipped
-reference. **A divergence is a port defect only when Rust != pristine C on
-the same host.** All 26 currently come out `same`. Re-run these three after
-any change that could move numeric output; never reclassify a variant from
-the reference alone.
+```bash
+SUNDIALS_C_TREE=/c/Users/nsh/Developer/sundials-7.8.0 tools/verify_examples.sh all
+```
 
-`tools/classify_diffs.sh` is the second pass —
-it re-diffs the non-IDENTICAL variants under `tr -s ' '` and `diff -w` so a
-whitespace-only divergence (stale `SUN_TABLE_WIDTH` 28 -> 29 references) can
-be told from a content one without opening 26 diffs. Never widen
-`noise_filter()` to swallow last-ulp drift, and never tune an example to
-match a reference.
+`tools/verify_examples.sh [crate|all|list]` parses the upstream CMakeLists
+tuples (199 variants), builds release examples, runs each variant with exact
+argv, diffs against `$SUNDIALS_C_TREE/examples/...` references
+(noise-filtered symmetrically), and writes `logs/summary.txt`. Read only the
+summary; open individual diffs only for non-IDENTICAL lines. CLI-option
+variants use bare `<solverid>.<key>` tokens (no leading dashes); the parser
+prefix-matches literally.
 
-Cross-distribution tooling, for any change that could move numeric output
-or widen a platform claim: `tools/glibc_sweep.sh` fingerprints each
-distribution's libm function by function (FNV-1a over 1M inputs, via
-`tools/libm_probe.c`) — cheap, needs only a C compiler per container, and
-it *predicts* which variants are at risk. `tools/gate_in_container.sh
-<image>...` then runs the full gate natively inside those distributions to
-confirm whether the difference is output-observable. Never state a
-distribution claim these two have not been run for.
+Current Windows/x86-64 gate: **125 IDENTICAL / 54 divergent / 20 excluded**,
+0 build failures, 0 run failures. Of the 54, 26 are the Linux port's set,
+already measured reference-side there; 28 more are Windows-only and are
+attributed to the UCRT libm by `tools/libm_fingerprint_win.sh` plus the fact
+that the identical Rust source is IDENTICAL on those variants under glibc.
+**A divergence is a port defect only when Rust != pristine C on the same
+host** — and that comparison has *not* yet been made on Windows. Until
+someone builds upstream SUNDIALS here with cmake + MSVC/clang-cl and re-runs
+the three-way comparison, say "0 port defects identified", never "0 port
+defects proven". `current_status.md` §6 item 1 is that job.
 
-`tools/pow_differential.sh [domain|random|all]` builds `tools/pow_oracle.c`
-with the host compiler and runs the two `pow_glibc_vs_native_oracle_*` tests
-against it. Re-run it after **any** change to `pow_glibc` — the example gate
-is blind to that class of defect (POW_FMA_EXACTNESS.md §6). Keep
-`pow_corpus` in `sundials_math.rs` byte-for-byte in step with the corpus
-generator in `pow_oracle.c`; if they drift, the differential silently
-compares different inputs.
+`tools/classify_diffs.sh` is the second pass — it re-diffs the non-IDENTICAL
+variants under `tr -s ' '` and `diff -w` so a whitespace-only divergence
+(stale `SUN_TABLE_WIDTH` 28 -> 29 references) can be told from a content one
+without opening 54 diffs. Currently 14 of the 54 are whitespace-only. Never
+widen `noise_filter()` to swallow last-ulp drift, and never tune an example
+to match a reference.
 
-## Working from Windows
+`tools/libm_fingerprint_win.sh` builds `tools/libm_probe.rs` natively and
+inside a WSL2 glibc guest and diffs the two fingerprints (FNV-1a over 1M
+results per function). Run it after any toolchain or OS update: it is what
+turns "the output moved" into "this function moved", and it *predicts*
+which variants are at risk before the gate is run.
 
-`tools/wsl_sync_build.sh {build|test|rel|gate|pow|sync}` rsyncs this working
-copy into a WSL Ubuntu sandbox (`~/sdl/port`, with `~/sdl/examples`
-symlinked at the upstream C tree so `../examples/...` resolves) and runs the
-step there. It strips CRLF from `tools/*.sh` first; `.gitattributes` pins
-those files to LF so a Windows checkout cannot break the shebang lines.
+`tools/pow_differential_win.sh [domain|random|all]` builds
+`tools/pow_oracle.c` inside the WSL2 guest with the guest `cc` — the glibc
+reference — and runs the `pow_glibc_vs_native_oracle_*` tests in a natively
+built Windows binary against it. Re-run it after **any** change to
+`pow_glibc`: the example gate is blind to that class of defect
+(POW_FMA_EXACTNESS.md §6). Keep `pow_corpus` in `sundials_math.rs`
+byte-for-byte in step with the corpus generator in `pow_oracle.c`; if they
+drift, the differential silently compares different inputs. The
+`pow_deterministic_vs_host_powf` test needs no oracle and reports how far
+the host UCRT `pow` is from the deterministic one.
+
+The Linux sibling's `tools/{pow_differential,glibc_sweep,gate_in_container,
+pristine_c_build,compare_pristine_c,compare_lapack_substituted,
+wsl_sync_build}.sh` and `tools/libm_probe.c` are carried along unchanged.
+They are Linux-side tools: they run in a Linux guest, they are what produced
+`evidence/linux-x86_64-glibc239/`, and they are the templates for open item
+1. Do not present their output as a Windows result.
 Invoke it as `wsl.exe -d Ubuntu-24.04 -- bash tools/wsl_sync_build.sh <step>`
 — do **not** pass `$PATH` inside a `bash -c` string, the interop layer
 pre-expands it and the Windows paths containing `(x86)` break bash parsing.

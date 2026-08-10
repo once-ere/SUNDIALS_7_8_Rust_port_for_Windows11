@@ -5,8 +5,8 @@ a new contract is fixed, never silently change an existing one.
 
 ## Platform contract
 
-`SUNDIALS_7_8_Rust_port_for_Linux` targets **Linux on Intel/AMD x86-64 with
-glibc**. (The contracts below were fixed in the sibling
+`SUNDIALS_7_8_Rust_port_for_Windows11` targets **Windows 11 on Intel/AMD
+x86-64**. (The contracts below were fixed in the sibling
 `SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos`, whose crate tree this
 workspace inherits unchanged; they describe the translation and are
 platform-neutral.) Two consequences bind everything below:
@@ -21,8 +21,12 @@ platform-neutral.) Two consequences bind everything below:
   examples go through `f64`'s methods, which Rust `std` forwards to the host
   libm. Only `SUNRpowerR` was taken off the host libm (`pow_glibc` in
   `sundials_math.rs`). Every deviation class below was argued unobservable
-  *on this platform*; the argument does not automatically survive a change of
-  libm.
+  *on the platform where it was argued*; that argument does not
+  automatically survive a change of libm, and on this target it does not:
+  the Microsoft UCRT disagrees with glibc on every transcendental the port
+  touches (`tools/libm_fingerprint_win.sh`), which is why the example gate
+  here is 125 / 54 / 20 rather than the Linux sibling's 153 / 26 / 20. See
+  `current_status.md` §§4–5.
 
 ## Crate graph
 

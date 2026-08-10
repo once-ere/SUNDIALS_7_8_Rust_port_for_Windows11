@@ -1,8 +1,353 @@
 # VERIFICATION — per-variant example matrix
 
-Project: **SUNDIALS_7_8_Rust_port_for_Linux**.
+Project: **SUNDIALS_7_8_Rust_port_for_Windows11**.
 
-## Part A — Linux / x86-64 / glibc results (this repository)
+This file has three parts. **Part A is the authoritative result for this
+repository**; Parts B and C are the sibling ports' evidence, carried over
+because they are the record of how each variant was root-caused and because
+Part A is read against them.
+
+## Part A — Windows 11 / x86-64 / UCRT results (this repository)
+
+Measured on Windows 11 Pro for Workstations 10.0.26200.8655 (25H2),
+Intel Core Ultra 9 275HX, `ucrtbase.dll` 10.0.26100.8521, rustc/cargo
+1.91.1, target `x86_64-pc-windows-msvc`, harness run from Git Bash
+(MSYS2 3.6.5). Commands:
+
+```bash
+SUNDIALS_C_TREE=/c/Users/nsh/Developer/sundials-7.8.0 tools/verify_examples.sh all
+SUNDIALS_C_TREE=/c/Users/nsh/Developer/sundials-7.8.0 tools/classify_diffs.sh
+```
+
+Raw output: `logs/summary.txt`, `logs/classify_diffs.txt`; committed copies
+in `evidence/windows-x86_64-ucrt/`.
+
+| | macOS / arm64 (Part C) | Linux / x86-64 (Part B) | **Windows 11 / x86-64 (here)** |
+|---|---:|---:|---:|
+| IDENTICAL | 127 | 153 | **125** |
+| divergent | 52 | 26 | **54** |
+| excluded (KLU/SuperLU) | 20 | 20 | 20 |
+| build failures | 0 | 0 | **0** |
+| run failures | 0 | 0 | **0** |
+| missing references | 0 | 0 | **0** |
+| **port defects** | 0 proven | 0 proven | **0 identified** (see below) |
+| total variants | 199 | 199 | 199 |
+
+All 108 in-scope example programs build and run to completion under the
+exact argv the upstream `CMakeLists.txt` tuples specify, and every one of
+the 199 shipped reference `.out` files is claimed by some tuple — the
+harness cross-check reports no orphans.
+
+### The 54 divergences
+
+**They are a strict superset of the Linux port's 26.** `comm` over the two
+summaries resolves the set exactly: all 26 Linux divergences are present
+here, none is resolved, and 28 are new. Second-pass classification
+(`tools/classify_diffs.sh`) splits the 54 into **14 whitespace-only** —
+`tr -s ' '` empties the diff, so every printed *value* is byte-identical and
+only column spacing differs (`SUN_TABLE_WIDTH` 28 → 29 in references that
+predate the change) — and **40 with content differences**.
+
+| group | count | status |
+|---|---:|---|
+| also divergent on Linux/glibc, where Rust was proven == pristine C | 26 | reference-side; see Part B |
+| Windows-only, caused by the host libm | 28 | see below |
+| of the inherited 26, whitespace-only on glibc but content-divergent here (`ark_harmonic_symplectic`, which evaluates `sin`/`cos`) | 1 (already counted above) | host libm |
+
+### Why the 28 extra variants diverge — measured, not assumed
+
+The port evaluates `sin`, `cos`, `exp`, `ln`, `asin`, `acos`, `atan`,
+`sinh`, `cosh` and `acosh` through `f64` methods that Rust documents as
+having *unspecified precision* and that forward to the host libm. Only `pow`
+was made host-independent. The upstream references were generated on glibc;
+this host is the Microsoft UCRT.
+
+`tools/libm_fingerprint_win.sh` builds the same Rust probe
+(`tools/libm_probe.rs`) natively on Windows and inside the WSL2 guest
+`Ubuntu-24.04` (glibc 2.39) and hashes 1,000,000 results per function:
+
+| function | Windows UCRT vs glibc 2.39 |
+|---|---|
+| `sqrt` | **same** — IEEE-754 specifies it; the control that shows the corpora are in step |
+| `sin`, `cos`, `tan`, `exp`, `ln`, `log10`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `acosh`, `tanh` | **all differ** |
+| `powf` — the host routine this port deliberately does not call | **differs** |
+
+Every one of the 28 evaluates at least one differing function:
+
+| variant family | host functions evaluated |
+|---|---|
+| `cvDiurnal_kry`, `cvDiurnal_kry_bp`, `cvKrylovDemo_ls` ×4, `cvsDiurnal_kry`, `cvsDiurnal_kry_bp`, `cvsDiurnal_FSA_kry` ×2 | `exp`, `sin` |
+| `idaFoodWeb_bnd`, `idaFoodWeb_kry`, `idasFoodWeb_bnd` | `sin` |
+| `idasSlCrank_dns`, `idasSlCrank_FSA_dns` | `sin`, `cos`, `asin`, `atan` |
+| `ark_analytic_lsrk`, `ark_analytic_lsrk_varjac`, `ark_analytic_lsrk_domeigest` ×2 | `atan`, `cos`, `acos` in the example; `ln`, `sinh`, `cosh`, `acosh` in `arkode_lsrkstep.rs:82–97` |
+| `ark_analytic_ssprk` | `atan` |
+| `ark_conserved_exp_entropy_ark`, `ark_conserved_exp_entropy_erk`, `ark_dissipated_exp_entropy` | `exp`, `ln` |
+| `ark_kpr_mri` ×5 | `sin`, `cos` |
+
+**The attribution argument.** The Rust source here is byte-identical to the
+Linux port's (one added test function aside), and on glibc/x86-64 those same
+28 variants are IDENTICAL. The arithmetic the port performs is therefore
+unchanged; the only quantity that moved is what the host libm returns.
+
+**What this does not yet establish.** A divergence is a *port defect* only
+when the Rust output also differs from what the pristine upstream C produces
+on the same machine. The Linux port made that comparison
+(`tools/pristine_c_build.sh`, `tools/compare_pristine_c.sh`) and got
+`same` on all 26. **No equivalent pristine-C build has been made on
+Windows.** So this file says **0 port defects identified**, not *proven*.
+Building upstream SUNDIALS 7.8.0 here with cmake + MSVC/clang-cl and
+re-running the three-way comparison is `current_status.md` §6 item 1.
+
+### `pow` — the one host routine removed, and the only one measured exactly
+
+`SUNRpowerR` routes through `pow_glibc` in
+`crates/sundials_core/src/sundials_math.rs`, the pure-Rust port of the ARM
+optimized-routines / musl `pow` that glibc ≥ 2.28 ships as
+`sysdeps/ieee754/dbl-64/e_pow.c`. On Windows both halves are measured
+natively:
+
+| measurement | corpus | result |
+|---|---:|---|
+| `pow_glibc` (built by `x86_64-pc-windows-msvc`, run natively) vs a **glibc** oracle built and run inside the WSL2 guest | 5,900,000 domain pairs | **0 mismatches** |
+| same, unrestricted finite bit patterns | 20,000,000 pairs | **0 mismatches** |
+| `pow_glibc` vs the **host UCRT** `pow` (`f64::powf`), in process | 5,900,000 domain pairs | **4,926 differ (1 in 1,198), worst gap 1 ulp** |
+
+The third row is why the substitution matters here and did not on Linux:
+every one of those 4,926 inputs is a digit the port would have got wrong had
+it called `f64::powf`. `tools/pow_differential_win.sh` reproduces all three;
+`POW_FMA_EXACTNESS.md` records what the routine's bit-exactness does and
+does not prove.
+
+
+### Part A appendix — all 199 variants, Windows verdicts
+
+Generated from `logs/summary.txt` and `logs/classify_diffs.txt` by the
+harness; copies of both are in `evidence/windows-x86_64-ucrt/`.
+
+* `identical` — byte-identical after the symmetric noise filter.
+* `whitespace-only(n, …)` — `tr -s ' '` empties the diff: every printed
+  *value* matches, only column spacing differs.
+* `content(n, …)` — real numeric or textual difference.
+* `inherited` — this variant also diverges on Linux/glibc, where the Linux
+  port proved Rust == pristine C (Part B).
+* `windows-only` — identical on Linux/glibc with the same Rust source;
+  caused by the host libm (Part A §"why").
+* `excluded(klu|superlu)` — out of scope by the port specification.
+
+Tally: **125 identical, 14 whitespace-only, 40 content, 20 excluded** (total 199).
+
+| crate | example | argv | status |
+|---|---|---|---|
+| cvode_rs | `cvAdvDiff_bnd` | `` | `identical` |
+| cvode_rs | `cvAnalytic_mels` | `` | `identical` |
+| cvode_rs | `cvDirectDemo_ls` | `` | `identical` |
+| cvode_rs | `cvDisc_dns` | `` | `identical` |
+| cvode_rs | `cvDiurnal_kry_bp` | `` | `content(58 lines, windows-only)` |
+| cvode_rs | `cvDiurnal_kry` | `` | `content(42 lines, windows-only)` |
+| cvode_rs | `cvKrylovDemo_ls` | `` | `content(124 lines, windows-only)` |
+| cvode_rs | `cvKrylovDemo_ls` | `1` | `content(124 lines, windows-only)` |
+| cvode_rs | `cvKrylovDemo_ls` | `2` | `content(124 lines, windows-only)` |
+| cvode_rs | `cvKrylovDemo_prec` | `` | `identical` |
+| cvode_rs | `cvParticle_dns` | `` | `identical` |
+| cvode_rs | `cvPendulum_dns` | `` | `content(10 lines, windows-only)` |
+| cvode_rs | `cvRoberts_dns` | `` | `identical` |
+| cvode_rs | `cvRoberts_dns_constraints` | `` | `identical` |
+| cvode_rs | `cvRoberts_dns_negsol` | `` | `whitespace-only(2 lines, windows-only)` |
+| cvode_rs | `cvRoberts_dns_uw` | `` | `identical` |
+| cvode_rs | `cvRocket_dns` | `` | `identical` |
+| cvode_rs | `cvVdp_auto_nls` | `` | `identical` |
+| cvode_rs | `cvKrylovDemo_ls` | `0 1` | `content(44 lines, windows-only)` |
+| cvode_rs | `cvAdvDiff_bndL` | `` | `identical` |
+| cvode_rs | `cvRoberts_dnsL` | `` | `content(16 lines, windows-only)` |
+| cvode_rs | `cvRoberts_block_klu` | `` | `excluded(klu)` |
+| cvode_rs | `cvRoberts_klu` | `` | `excluded(klu)` |
+| cvode_rs | `cvRoberts_sps` | `` | `excluded(superlu)` |
+| cvodes_rs | `cvsAdvDiff_ASAi_bnd` | `` | `identical` |
+| cvodes_rs | `cvsAdvDiff_FSA_non` | `-sensi sim t` | `identical` |
+| cvodes_rs | `cvsAdvDiff_FSA_non` | `-sensi stg t` | `identical` |
+| cvodes_rs | `cvsAdvDiff_bnd` | `` | `identical` |
+| cvodes_rs | `cvsAnalytic_mels` | `` | `identical` |
+| cvodes_rs | `cvsAnalytic_mels` | `cvodes.max_order 3` | `identical` |
+| cvodes_rs | `cvsDirectDemo_ls` | `` | `identical` |
+| cvodes_rs | `cvsDiurnal_FSA_kry` | `-sensi sim t` | `content(104 lines, windows-only)` |
+| cvodes_rs | `cvsDiurnal_FSA_kry` | `-sensi stg t` | `content(92 lines, windows-only)` |
+| cvodes_rs | `cvsDiurnal_kry` | `` | `content(42 lines, windows-only)` |
+| cvodes_rs | `cvsDiurnal_kry_bp` | `` | `content(58 lines, windows-only)` |
+| cvodes_rs | `cvsFoodWeb_ASAi_kry` | `` | `identical` |
+| cvodes_rs | `cvsFoodWeb_ASAp_kry` | `` | `identical` |
+| cvodes_rs | `cvsHessian_ASA_FSA` | `` | `identical` |
+| cvodes_rs | `cvsKrylovDemo_ls` | `` | `content(149 lines, windows-only)` |
+| cvodes_rs | `cvsKrylovDemo_ls` | `1` | `content(149 lines, windows-only)` |
+| cvodes_rs | `cvsKrylovDemo_ls` | `2` | `content(149 lines, windows-only)` |
+| cvodes_rs | `cvsKrylovDemo_prec` | `` | `identical` |
+| cvodes_rs | `cvsLotkaVolterra_ASA` | `` | `identical` |
+| cvodes_rs | `cvsParticle_dns` | `` | `identical` |
+| cvodes_rs | `cvsPendulum_dns` | `` | `content(10 lines, windows-only)` |
+| cvodes_rs | `cvsRoberts_ASAi_dns` | `` | `identical` |
+| cvodes_rs | `cvsRoberts_ASAi_dns_constraints` | `` | `identical` |
+| cvodes_rs | `cvsRoberts_FSA_dns` | `-sensi sim t` | `identical` |
+| cvodes_rs | `cvsRoberts_FSA_dns` | `-sensi stg1 t` | `identical` |
+| cvodes_rs | `cvsRoberts_FSA_dns_Switch` | `` | `identical` |
+| cvodes_rs | `cvsRoberts_FSA_dns_constraints` | `-sensi stg1 t` | `identical` |
+| cvodes_rs | `cvsRoberts_dns` | `` | `identical` |
+| cvodes_rs | `cvsRoberts_dns_constraints` | `` | `identical` |
+| cvodes_rs | `cvsRoberts_dns_uw` | `` | `identical` |
+| cvodes_rs | `cvsKrylovDemo_ls` | `0 1` | `content(782 lines, windows-only)` |
+| cvodes_rs | `cvsAdvDiff_bndL` | `` | `identical` |
+| cvodes_rs | `cvsRoberts_dnsL` | `` | `content(32 lines, windows-only)` |
+| cvodes_rs | `cvsRoberts_ASAi_klu` | `` | `excluded(klu)` |
+| cvodes_rs | `cvsRoberts_FSA_klu` | `-sensi stg1 t` | `excluded(klu)` |
+| cvodes_rs | `cvsRoberts_klu` | `` | `excluded(klu)` |
+| cvodes_rs | `cvsRoberts_ASAi_sps` | `` | `excluded(superlu)` |
+| cvodes_rs | `cvsRoberts_FSA_sps` | `-sensi stg1 t` | `excluded(superlu)` |
+| cvodes_rs | `cvsRoberts_sps` | `` | `excluded(superlu)` |
+| kinsol_rs | `kinAnalytic_fp` | `` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--damping_fp 0.5` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--damping_fn` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2 --delay_aa 2` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2 --damping_aa 0.5` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2 --damping_fn` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 3 --depth_fn` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2 --orth_aa 1` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2 --orth_aa 2` | `identical` |
+| kinsol_rs | `kinAnalytic_fp` | `--m_aa 2 --orth_aa 3` | `identical` |
+| kinsol_rs | `kinFerTron_dns` | `` | `identical` |
+| kinsol_rs | `kinFoodWeb_kry` | `` | `identical` |
+| kinsol_rs | `kinKrylovDemo_ls` | `` | `identical` |
+| kinsol_rs | `kinLaplace_bnd` | `` | `identical` |
+| kinsol_rs | `kinLaplace_picard_bnd` | `` | `identical` |
+| kinsol_rs | `kinLaplace_picard_kry` | `` | `identical` |
+| kinsol_rs | `kinRoberts_fp` | `` | `identical` |
+| kinsol_rs | `kinRoberts_fp` | `kinsol.m_aa 1` | `identical` |
+| kinsol_rs | `kinRoboKin_dns` | `` | `whitespace-only(32 lines, windows-only)` |
+| kinsol_rs | `kinFerTron_klu` | `` | `excluded(klu)` |
+| kinsol_rs | `kinRoboKin_slu` | `` | `excluded(superlu)` |
+| ida_rs | `idaAnalytic_mels` | `` | `identical` |
+| ida_rs | `idaAnalytic_mels` | `ida.scalar_tolerances 1e-3 1e-8` | `identical` |
+| ida_rs | `idaFoodWeb_bnd` | `` | `content(4 lines, windows-only)` |
+| ida_rs | `idaFoodWeb_kry` | `` | `content(4 lines, windows-only)` |
+| ida_rs | `idaHeat2D_bnd` | `` | `identical` |
+| ida_rs | `idaHeat2D_kry` | `` | `identical` |
+| ida_rs | `idaKrylovDemo_ls` | `` | `identical` |
+| ida_rs | `idaKrylovDemo_ls` | `1` | `identical` |
+| ida_rs | `idaKrylovDemo_ls` | `2` | `identical` |
+| ida_rs | `idaRoberts_dns` | `` | `identical` |
+| ida_rs | `idaSlCrank_dns` | `` | `identical` |
+| ida_rs | `idaHeat2D_klu` | `` | `excluded(klu)` |
+| ida_rs | `idaRoberts_klu` | `` | `excluded(klu)` |
+| ida_rs | `idaRoberts_sps` | `` | `excluded(superlu)` |
+| idas_rs | `idasAkzoNob_ASAi_dns` | `` | `content(3 lines, windows-only)` |
+| idas_rs | `idasAkzoNob_dns` | `` | `identical` |
+| idas_rs | `idasAnalytic_mels` | `` | `identical` |
+| idas_rs | `idasAnalytic_mels` | `idas.init_step 1e-5` | `identical` |
+| idas_rs | `idasFoodWeb_bnd` | `` | `content(4 lines, windows-only)` |
+| idas_rs | `idasHeat2D_bnd` | `` | `identical` |
+| idas_rs | `idasHeat2D_kry` | `` | `identical` |
+| idas_rs | `idasHessian_ASA_FSA` | `` | `identical` |
+| idas_rs | `idasKrylovDemo_ls` | `` | `identical` |
+| idas_rs | `idasKrylovDemo_ls` | `1` | `identical` |
+| idas_rs | `idasKrylovDemo_ls` | `2` | `identical` |
+| idas_rs | `idasRoberts_ASAi_dns` | `` | `identical` |
+| idas_rs | `idasRoberts_FSA_dns` | `-sensi stg t` | `identical` |
+| idas_rs | `idasRoberts_dns` | `` | `identical` |
+| idas_rs | `idasSlCrank_dns` | `` | `content(2 lines, windows-only)` |
+| idas_rs | `idasSlCrank_FSA_dns` | `` | `content(18 lines, windows-only)` |
+| idas_rs | `idasRoberts_ASAi_klu` | `` | `excluded(klu)` |
+| idas_rs | `idasRoberts_FSA_klu` | `-sensi stg t` | `excluded(klu)` |
+| idas_rs | `idasRoberts_klu` | `` | `excluded(klu)` |
+| idas_rs | `idasRoberts_ASAi_sps` | `` | `excluded(superlu)` |
+| idas_rs | `idasRoberts_FSA_sps` | `-sensi stg t` | `excluded(superlu)` |
+| idas_rs | `idasRoberts_sps` | `` | `excluded(superlu)` |
+| arkode_rs | `ark_analytic` | `` | `identical` |
+| arkode_rs | `ark_analytic` | `arkode.scalar_tolerances 1e-6 1e-8 arkode.table_names ARKODE_ESDIRK547L2SA_7_4_5 ARKODE_ERK_NONE` | `identical` |
+| arkode_rs | `ark_advection_diffusion_reaction_splitting` | `` | `identical` |
+| arkode_rs | `ark_analytic_lsrk` | `` | `content(16 lines, windows-only)` |
+| arkode_rs | `ark_analytic_lsrk_varjac` | `` | `content(24 lines, windows-only)` |
+| arkode_rs | `ark_analytic_lsrk_domeigest` | `` | `content(28 lines, windows-only)` |
+| arkode_rs | `ark_analytic_lsrk_domeigest` | `arkid.dom_eig_est_init_preprocess_iters 1 sundomeigestimator.max_iters 1` | `content(28 lines, windows-only)` |
+| arkode_rs | `ark_analytic_mels` | `` | `identical` |
+| arkode_rs | `ark_analytic_nonlin` | `` | `identical` |
+| arkode_rs | `ark_analytic_partitioned` | `forcing` | `whitespace-only(84 lines, windows-only)` |
+| arkode_rs | `ark_analytic_partitioned` | `splitting` | `whitespace-only(84 lines, windows-only)` |
+| arkode_rs | `ark_analytic_partitioned` | `splitting ARKODE_SPLITTING_BEST_2_2_2` | `whitespace-only(84 lines, windows-only)` |
+| arkode_rs | `ark_analytic_partitioned` | `splitting ARKODE_SPLITTING_RUTH_3_3_2` | `whitespace-only(84 lines, windows-only)` |
+| arkode_rs | `ark_analytic_partitioned` | `splitting ARKODE_SPLITTING_YOSHIDA_8_6_2` | `whitespace-only(84 lines, windows-only)` |
+| arkode_rs | `ark_analytic_ssprk` | `` | `content(6 lines, windows-only)` |
+| arkode_rs | `ark_brusselator_1D_mri` | `` | `identical` |
+| arkode_rs | `ark_brusselator_fp` | `` | `identical` |
+| arkode_rs | `ark_brusselator_lsrk_domeigest` | `` | `identical` |
+| arkode_rs | `ark_brusselator_lsrk_externaldomeigest` | `` | `identical` |
+| arkode_rs | `ark_brusselator_mri` | `` | `identical` |
+| arkode_rs | `ark_brusselator` | `` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `0 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `2 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `3 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `4 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `5 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `6 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D_imexmri` | `7 0.001` | `identical` |
+| arkode_rs | `ark_brusselator1D` | `` | `identical` |
+| arkode_rs | `ark_conserved_exp_entropy_ark` | `1 0` | `content(48 lines, windows-only)` |
+| arkode_rs | `ark_conserved_exp_entropy_ark` | `1 1` | `content(31 lines, windows-only)` |
+| arkode_rs | `ark_conserved_exp_entropy_erk` | `1` | `content(48 lines, windows-only)` |
+| arkode_rs | `ark_damped_harmonic_symplectic` | `` | `whitespace-only(26 lines, windows-only)` |
+| arkode_rs | `ark_dissipated_exp_entropy` | `1 0` | `content(82 lines, windows-only)` |
+| arkode_rs | `ark_dissipated_exp_entropy` | `1 1` | `content(1 lines, windows-only)` |
+| arkode_rs | `ark_harmonic_symplectic` | `` | `content(28 lines, windows-only)` |
+| arkode_rs | `ark_heat1D_adapt` | `` | `identical` |
+| arkode_rs | `ark_heat1D` | `` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper ERK --step-mode adapt` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper ERK --step-mode fixed --count-orbits` | `whitespace-only(36 lines, windows-only)` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --count-orbits --use-compensated-sums` | `whitespace-only(28 lines, windows-only)` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_EULER_1_1 --tf 50 --check-order --nout 1` | `whitespace-only(242 lines, windows-only)` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_LEAPFROG_2_2 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_MCLACHLAN_2_2 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_MCLACHLAN_3_3 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_MCLACHLAN_4_4 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_MCLACHLAN_5_6 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_PSEUDO_LEAPFROG_2_2 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_RUTH_3_3 --tf 50 --check-order --nout 1` | `whitespace-only(242 lines, windows-only)` |
+| arkode_rs | `ark_kepler` | `--stepper SPRK --step-mode fixed --method ARKODE_SPRK_YOSHIDA_6_8 --tf 50 --check-order --nout 1` | `identical` |
+| arkode_rs | `ark_kepler` | `` | `whitespace-only(26 lines, windows-only)` |
+| arkode_rs | `ark_kpr_mri` | `0 1 0.005` | `content(4 lines, windows-only)` |
+| arkode_rs | `ark_kpr_mri` | `1 0 0.01` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `1 1 0.002` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `2 4 0.002` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `3 2 0.001` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `4 3 0.001` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `5 4 0.001` | `content(8 lines, windows-only)` |
+| arkode_rs | `ark_kpr_mri` | `6 5 0.001` | `content(14 lines, windows-only)` |
+| arkode_rs | `ark_kpr_mri` | `7 2 0.002` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `8 3 0.001 -100 100 0.5 1` | `content(2 lines, windows-only)` |
+| arkode_rs | `ark_kpr_mri` | `9 3 0.001 -100 100 0.5 1` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `10 4 0.001 -100 100 0.5 1` | `content(26 lines, windows-only)` |
+| arkode_rs | `ark_kpr_mri` | `11 2 0.001` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `12 3 0.005` | `identical` |
+| arkode_rs | `ark_kpr_mri` | `13 4 0.01` | `identical` |
+| arkode_rs | `ark_KrylovDemo_prec` | `` | `identical` |
+| arkode_rs | `ark_KrylovDemo_prec` | `1` | `identical` |
+| arkode_rs | `ark_KrylovDemo_prec` | `2` | `identical` |
+| arkode_rs | `ark_lotka_volterra_ASA` | `--check-freq 1` | `identical` |
+| arkode_rs | `ark_lotka_volterra_ASA` | `--check-freq 5` | `identical` |
+| arkode_rs | `ark_onewaycouple_mri` | `` | `identical` |
+| arkode_rs | `ark_reaction_diffusion_mri` | `` | `whitespace-only(70 lines, windows-only)` |
+| arkode_rs | `ark_robertson_constraints` | `` | `identical` |
+| arkode_rs | `ark_robertson_root` | `` | `identical` |
+| arkode_rs | `ark_robertson` | `` | `identical` |
+| arkode_rs | `ark_twowaycouple_mri` | `` | `identical` |
+| arkode_rs | `ark_brusselator_fp` | `1` | `identical` |
+
+---
+
+## Part B — inherited Linux / x86-64 / glibc evidence
+
+Everything in this part is the sibling port
+`SUNDIALS_7_8_Rust_port_for_Linux`’s result, reproduced unchanged. It is
+not a Windows result. It matters here for one reason: it is the proof, made
+against a pristine C build on that host, that the 26 divergences this port
+inherits are reference-side rather than translation errors — and it is the
+baseline Part A’s 28 extra divergences are measured against.
 
 Measured on Ubuntu 24.04 x86-64, glibc 2.39, gcc 13.3.0, rustc 1.93.1.
 Command: `tools/verify_examples.sh all`, then `tools/classify_diffs.sh`.
@@ -113,7 +458,9 @@ architecture can match all 199 exactly.
 
 ---
 
-## Part B — inherited macOS / Apple Silicon evidence
+---
+
+## Part C — inherited macOS / Apple Silicon evidence
 
 Everything below is the sibling port's verification file, reproduced
 unchanged. It is the record of how each variant was root-caused; the

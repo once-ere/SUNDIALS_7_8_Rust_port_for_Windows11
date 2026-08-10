@@ -16,7 +16,7 @@
 set -u
 cd "$(dirname "$0")/.."
 LOGS="$PWD/logs"
-UP="$PWD/.."
+UP="${SUNDIALS_C_TREE:-$PWD/..}"
 
 printf '%-58s %-9s %-9s %s\n' VARIANT EXACT SQUEEZE WS
 for f in "$LOGS"/*.out; do

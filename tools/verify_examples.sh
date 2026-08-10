@@ -3,26 +3,27 @@
 #
 # Batch example-verification harness (prompt §6).
 #
-# PLATFORM SCOPE — Linux on Intel/AMD x86-64 with glibc.
-#   Requirements: POSIX bash, cargo, and the read-only upstream SUNDIALS
-#   7.8.0 C tree as this workspace's PARENT directory (reference .out files
-#   are read from ../examples/<solver>/<serial dir>/). Without that tree the
-#   script has nothing to diff against and every variant reports NO-REF. On
-#   Windows it needs Git Bash / MSYS2 / WSL; it will not run under cmd.exe
-#   or PowerShell. tools/wsl_sync_build.sh gate wires up the WSL case.
+# PLATFORM SCOPE — Windows 11 on Intel/AMD x86-64.
+#   Requirements: POSIX bash (Git Bash / MSYS2 — it will not run under
+#   cmd.exe or PowerShell), cargo, and the read-only upstream SUNDIALS 7.8.0
+#   C tree. This workspace does NOT live inside that tree, so name it:
+#     SUNDIALS_C_TREE=/c/Users/nsh/Developer/sundials-7.8.0 tools/verify_examples.sh all
+#   Reference .out files are read from
+#   $SUNDIALS_C_TREE/examples/<solver>/<serial dir>/.
 #
 #   It executes on any POSIX host meeting those requirements, but its
-#   VERDICTS are only meaningful on glibc/x86-64. The port takes sin, cos,
-#   asin, acos, atan, sinh, cosh, acosh, exp and ln from the host libm (only
-#   `pow` was made host-independent; sqrt/mul_add/ceil/round are IEEE-exact
-#   and portable), and on glibc that host libm is the one that generated the
-#   upstream references — which is why the gate reaches 153 IDENTICAL here
-#   against 127 on macOS/arm64. On a different libm a different set of
-#   variants diverges; those must be re-classified from scratch on that
-#   host — never by tuning an example, and never by widening noise_filter()
-#   to swallow last-ulp drift. Current result: 153 IDENTICAL / 26
-#   reference-side / 20 excluded, 0 port defects. tools/classify_diffs.sh is
-#   the second pass over the 26. See README.md § "Platform scope".
+#   VERDICTS are platform-bound. The port takes sin, cos, asin, acos, atan,
+#   sinh, cosh, acosh, exp and ln from the host libm (only `pow` was made
+#   host-independent; sqrt/mul_add/ceil/round are IEEE-exact and portable).
+#   The upstream references were generated on glibc; this host is the
+#   Microsoft UCRT, which tools/libm_fingerprint_win.sh shows disagrees with
+#   glibc on every one of those ten. Current result: 125 IDENTICAL / 54
+#   divergent / 20 excluded, 0 port defects identified — against 153 / 26 /
+#   20 for the Linux sibling running the identical Rust source, and 127 /
+#   52 / 20 on macOS/arm64. Never close a divergence by tuning an example,
+#   and never widen noise_filter() to swallow last-ulp drift.
+#   tools/classify_diffs.sh is the second pass over the 54. See
+#   current_status.md §§3-5.
 #
 #   list        print every (crate, example, args, outfile, status) variant
 #               tuple for all crates, tab-separated — used to (re)generate

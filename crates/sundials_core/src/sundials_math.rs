@@ -895,41 +895,33 @@ mod tests {
      * The other direction: how far the *host* `pow` of this target is
      * from the deterministic routine.
      *
-     * On Windows, `f64::powf` resolves to the Microsoft UCRT `pow`, which
-     * is not the routine that generated the upstream reference outputs.
-     * This test consumes a UCRT oracle bit-stream (built by clang in
-     * `tools/pow_differential_win.sh`) and reports how many of the
-     * 5,900,000 domain inputs UCRT rounds differently from glibc's
-     * algorithm. It is evidence, not a gate: it explains why `SUNRpowerR`
-     * must not call `f64::powf` on this platform. The only assertion is a
-     * sanity bound — both routines are faithful implementations, so they
-     * may not differ by more than 1 ulp.
+     * `f64::powf` is what the port would call if it did not carry its own
+     * `pow`; on x86_64-pc-windows-msvc that lowers to the Microsoft UCRT
+     * `pow` in `ucrtbase.dll`, which is *not* the routine that generated
+     * the upstream reference outputs. No oracle file is involved — the
+     * comparison is made in process, against exactly the symbol this
+     * build's `f64::powf` resolves to, over the same 5,900,000-pair
+     * domain corpus the glibc differential uses.
+     *
+     * This is evidence, not a gate. It is the reason `SUNRpowerR` must not
+     * call `f64::powf` on this platform: every input counted below is one
+     * where doing so would change a printed digit relative to a glibc
+     * host. The single assertion is a sanity bound — both are faithful
+     * implementations, so they may not differ by more than 1 ulp. On a
+     * glibc host the count is 0 and the test still passes, which is what
+     * makes it meaningful to run it everywhere.
      * --------------------------------------------------------------- */
     #[test]
-    fn pow_deterministic_vs_windows_ucrt_oracle() {
-        let path = match std::env::var("SUNDIALS_POW_ORACLE_UCRT") {
-            Err(_) => {
-                eprintln!("pow UCRT differential: not run (no oracle)");
-                return;
-            }
-            Ok(p) => p,
-        };
-        let blob = std::fs::read(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
+    fn pow_deterministic_vs_host_powf() {
         let (mut total, mut differing, mut worst) = (0usize, 0usize, 0i64);
-        for (i, (x, y)) in pow_corpus(true).enumerate() {
-            let off = i * 8;
-            if off + 8 > blob.len() {
-                break;
-            }
-            let mut w = [0u8; 8];
-            w.copy_from_slice(&blob[off..off + 8]);
-            let host = u64::from_le_bytes(w);
+        for (x, y) in pow_corpus(true) {
+            let host = x.powf(y).to_bits();
             let ours = pow_glibc(x, y).to_bits();
             total += 1;
             if host != ours {
                 differing += 1;
-                /* Both operands are finite positives here, so the bit
-                patterns are monotone in the value and their difference
+                /* x > 0 and both results are finite positives here, so the
+                bit patterns are monotone in the value and their difference
                 is the ulp distance. */
                 let d = (host as i64 - ours as i64).abs();
                 if d > worst {
@@ -938,12 +930,12 @@ mod tests {
             }
         }
         eprintln!(
-            "pow UCRT differential: {total} inputs, {differing} differ from the \
-             deterministic routine, worst gap {worst} ulp"
+            "pow host-libm differential: {total} inputs, {differing} differ from \
+             the deterministic routine, worst gap {worst} ulp"
         );
         assert!(
             worst <= 1,
-            "host UCRT pow differs from the deterministic pow by more than 1 ulp"
+            "the host pow differs from the deterministic pow by more than 1 ulp"
         );
     }
 

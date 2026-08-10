@@ -1,6 +1,7 @@
-# SUNDIALS_7_8_Rust_port_for_Linux
+# SUNDIALS_7_8_Rust_port_for_Windows11
 
-*SUNDIALS 7.8.0 — pure-Rust port, verified on Linux / Intel-AMD x86-64 / glibc.*
+*SUNDIALS 7.8.0 — pure-Rust port, built and measured on Windows 11 /
+Intel-AMD x86-64.*
 
 A line-by-line translation of [SUNDIALS](https://github.com/LLNL/sundials)
 7.8.0 into safe Rust. The C control flow, constants, tolerances, heuristics,
@@ -8,15 +9,18 @@ return codes and argument lists are preserved function by function; the
 acceptance criterion is **byte-identical printed output** against the C
 reference examples, not "close enough".
 
-> ## ⚠ Platform scope: Linux on x86-64 with glibc — and a note on this file
+> ## ⚠ Platform scope: Windows 11 on x86-64 — and a note on this file
 >
-> **Every numerical claim for *this* repository was established on Ubuntu
-> 24.04 x86-64, glibc 2.39, gcc 13.3.0, rustc 1.93.1.** The current gate is
-> **153 IDENTICAL / 26 reference-side divergences / 20 excluded**, 0 port
-> defects, and the deterministic `pow` is bit-exact against the native glibc
-> `pow` over 25.9 million measured inputs. The authoritative statements are
-> in [`README.md`](README.md), [`current_status.md`](current_status.md) and
-> **Part A** of [`VERIFICATION.md`](VERIFICATION.md).
+> **Every numerical claim for *this* repository was established on Windows 11
+> Pro for Workstations 10.0.26200 (25H2), x86-64, `ucrtbase.dll`
+> 10.0.26100.8521, rustc 1.91.1, target `x86_64-pc-windows-msvc`.** The
+> current gate is **125 IDENTICAL / 54 divergent / 20 excluded**, 0 port
+> defects identified — that is *not* a byte-identity pass, and the reason is
+> the host libm, not the translation. The deterministic `pow` *is* bit-exact
+> against a glibc oracle over 25.9 million measured inputs. The authoritative
+> statements are in [`current_status.md`](current_status.md),
+> [`README.md`](README.md) and **Part A** of
+> [`VERIFICATION.md`](VERIFICATION.md).
 >
 > **This guide is inherited, essentially unchanged, from the sibling
 > macOS/Apple-Silicon port**, together with the whole crate tree it
@@ -25,19 +29,22 @@ reference examples, not "close enough".
 > is platform-independent and accurate here. Where it discusses **Apple
 > libm, arm64, the 127 / 52 / 20 tally, or "porting to another platform"
 > (§5, §9)**, read it as the inherited discussion of the macOS port, not as a
-> statement about this one; §9's checklist is in fact the recipe that *was*
-> followed to produce this repository, and `current_status.md` records the
-> outcome.
+> statement about this one; §9's checklist is the recipe this repository
+> followed, and `current_status.md` records how far it got — item 1 of it is
+> done for `pow` and open for everything else.
 >
 > The Rust sources are portable: `std` only, no `unsafe`, no FFI, and no
 > `cfg(target_os)` or `cfg(target_arch)` anywhere. What is platform-bound is
 > byte-identical **output**: the library and the examples reach `sin`, `cos`,
 > `asin`, `acos`, `atan`, `sinh`, `cosh`, `acosh`, `exp` and `ln` through
 > `f64` methods that Rust `std` documents as having *unspecified precision*
-> and forwards to the **host** libm. On glibc that host libm is the one the
-> upstream references were generated with — which is exactly why the gate
-> improves from 127 to 153 IDENTICAL here. `pow` is additionally taken off
-> the host (§5, §8). `sqrt`, `mul_add`, `ceil`, `round`, `abs` and `copysign`
+> and forwards to the **host** libm. The upstream references were generated
+> on glibc; this target's host libm is the Microsoft UCRT, and
+> `tools/libm_fingerprint_win.sh` shows **every one of those ten functions
+> disagrees with glibc**. That, and nothing else, is why the gate reads 125
+> rather than the Linux sibling's 153. `pow` is the one function taken off
+> the host (§5, §8), and on this platform that substitution is load-bearing:
+> the UCRT `pow` differs from the ported one on 1 domain input in 1,198. `sqrt`, `mul_add`, `ceil`, `round`, `abs` and `copysign`
 > are IEEE-754 specified and identical on every target — they are not part of
 > the problem, and must not be described as if they were.
 >
@@ -55,9 +62,9 @@ reference examples, not "close enough".
 | Rust edition | 2021, `std` only |
 | Version | tracks upstream 7.8.0 (`SUNDIALS_VERSION` = `"7.8.0"`) |
 | Conditional compilation | none — 0 `cfg(target_os)`, 0 `cfg(target_arch)` in the tree |
-| Verified platform | **Linux on Intel/AMD x86-64**, glibc 2.39, gcc 13.3.0 (Ubuntu 24.04) |
-| Distribution coverage | measured: glibc 2.36–2.41 (Debian 12, Ubuntu 24.04, Debian 13, Fedora 41) give the identical gate result; Arch/glibc 2.44 moves 3 LSRK variants; musl out of scope — see `README.md` § "Distribution coverage" |
-| Other platforms | builds and unit-tests anywhere Rust targets; byte-identical output **not** claimed off glibc/x86-64 (the macOS/arm64 sibling repo claims it there) |
+| Measured platform | **Windows 11 on Intel/AMD x86-64**, `ucrtbase.dll` 10.0.26100.8521, rustc 1.91.1 (Windows 11 Pro for Workstations 25H2) |
+| Example gate here | 125 IDENTICAL / 54 divergent / 20 excluded; byte-identity is **not** claimed — see `current_status.md` §§4–5 |
+| Other platforms | builds and unit-tests anywhere Rust targets; the Linux sibling reaches 153 / 26 / 20 on glibc and the macOS one 127 / 52 / 20 on Apple libm, from the same crate tree |
 
 Roughly 192k lines of Rust across 141 modules, plus 108 translated example
 programs covering every serial upstream example for CVODE(S), KINSOL, IDA(S)
@@ -571,8 +578,15 @@ elsewhere, three things must be redone on the target platform:
    nowhere. Decide which implementation the port should reproduce on the
    target and, where the host's differs, port those functions the way `pow`
    was ported here (`sundials_math.rs`, `POW_FMA_EXACTNESS.md`) — including
-   re-measuring the FMA-contraction map against an oracle built natively on
-   *that* target rather than trusting the arm64 measurements.
+   re-measuring against an oracle built natively for *that* target rather
+   than trusting the arm64 measurements.
+
+   *Status on Windows:* done for `pow` (§0 of `POW_FMA_EXACTNESS.md`), open
+   for the other ten. A fresh count on this tree gives **9** host-libm call
+   sites in library code (5 `exp`, and `ln`/`sinh`/`cosh`/`acosh` in
+   `arkode_lsrkstep.rs`) and **191** in the examples (`sin` 53, `cos` 44,
+   `exp` 59, `ln` 12, `atan` 24, `acos` 5, `asin` 3).
+   `current_status.md` §5 turns that into a per-routine work list.
 2. **Re-run and re-classify the gate.** The 52 documented exceptions of §6b
    are Apple-libm diagnoses. On another host a different set of variants
    diverges; each one must be root-caused against a pristine upstream C binary
@@ -580,9 +594,11 @@ elsewhere, three things must be redone on the target platform:
    LAPACK→native) argued from measurement. Never tune an example to match a
    reference.
 3. **Re-host the harness.** `tools/verify_examples.sh` needs POSIX `bash`,
-   `cargo`, and the read-only upstream SUNDIALS 7.8.0 C tree as its parent
-   directory. On Windows it needs a POSIX environment (Git Bash, MSYS2, WSL)
-   or a rewrite; it will not run under `cmd.exe` or PowerShell.
+   `cargo`, and the read-only upstream SUNDIALS 7.8.0 C tree. In this
+   repository the tree no longer has to be the workspace's parent directory:
+   `$SUNDIALS_C_TREE` names it, and example binaries get the `.exe` suffix.
+   It runs under Git Bash or MSYS2; it will not run under `cmd.exe` or
+   PowerShell.
 4. **Re-generate the `printf` corpus, or decide not to.**
    `crates/sundials_core/src/sundials_utils_cvec.txt` holds 1500+ conversion
    vectors produced by one host's C `printf`, committed and pulled in with

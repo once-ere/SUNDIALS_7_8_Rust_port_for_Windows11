@@ -1,27 +1,44 @@
 # Is the deterministic `pow` 100% correct?
 
-**On this repository's target — Linux, glibc, Intel/AMD x86-64 — yes, as far
-as measurement reaches: 0 mismatches against the native glibc `pow` over
-5,900,000 inputs in the domain SUNDIALS evaluates and 0 over 20,000,000
-unrestricted finite inputs.**
+**On this repository's target — Windows 11, Intel/AMD x86-64 — yes, as far
+as measurement reaches: the routine, compiled by `x86_64-pc-windows-msvc`
+and run natively, reproduces the **glibc** `pow` bit-for-bit over 5,900,000
+inputs in the domain SUNDIALS evaluates and 20,000,000 unrestricted finite
+inputs, with 0 mismatches.** glibc is the right thing to be exact against
+because glibc generated the upstream reference outputs; the Microsoft UCRT
+`pow` this port refuses to call disagrees with it on 1 domain input in
+1,198.
 
-§§1–7 below are the inherited macOS/arm64 investigation, kept because it is
-where the FMA-contraction map was derived and where the reasoning lives.
-**§0 is the result that supersedes its "what is still not proven" section for
-this platform.** Read §0 first.
+§0 below is the Windows measurement. §0.1 is the Linux/glibc measurement
+inherited from the sibling port, which established the same result with the
+oracle and the routine on one host. §§1–7 are the original macOS/arm64
+investigation, kept because it is where the FMA-contraction map was derived
+and where the reasoning lives; **§0 and §0.1 supersede its "what is still
+not proven" section.** Read §0 first.
 
 ---
 
-## 0. Native x86-64 measurement (this repository)
+## 0. Native Windows x86-64 measurement (this repository)
 
-The macOS project closed §5 with: *"No differential run was made on a native
-x86-64 host."* That run now exists and is part of this repository.
+The question this repository had to answer is narrower than it looks. The
+routine is `std`-only Rust with no `cfg(target_arch)`, and `f64::mul_add` is
+a fused, correctly-rounded operation on every Rust target, so there was
+never a reason to expect the *algorithm* to need rewriting for Windows.
+What was missing was a measurement made by the **Windows toolchain**, on a
+**Windows host**, against the libm the references actually came from.
+
+The awkward part is that a glibc oracle cannot be produced by a Windows
+toolchain. It is therefore built and run inside a WSL2 Linux guest — a real
+glibc/x86-64 userspace — and its bit-stream is handed across to a test
+binary that is compiled and executed natively on Windows. That crossing is
+the experiment.
 
 | | |
 |---|---|
-| host | Ubuntu 24.04 x86-64, **glibc 2.39**, gcc 13.3.0, CPU with FMA |
-| oracle | `tools/pow_oracle.c`, built with the host `cc -O2`, calling the host `pow` |
-| harness | `tools/pow_differential.sh` → `logs/pow_differential.log` |
+| test host | Windows 11 Pro for Workstations 10.0.26200.8655, Intel Core Ultra 9 275HX (FMA/AVX2), rustc 1.91.1, target `x86_64-pc-windows-msvc` |
+| oracle host | WSL2 guest `Ubuntu-24.04`, **glibc 2.39-0ubuntu8.7**, guest `cc -O2` |
+| oracle | `tools/pow_oracle.c`, calling the guest's `pow` |
+| harness | `tools/pow_differential_win.sh` → `logs/pow_differential_win.log` |
 | Rust side | `pow_glibc_vs_native_oracle_{domain,random}` in `crates/sundials_core/src/sundials_math.rs` |
 
 | corpus | inputs | mismatches |
@@ -29,7 +46,32 @@ x86-64 host."* That run now exists and is part of this repository.
 | SUNDIALS operating domain (`x` ∈ (0,100], `y` = ±1/k, k = 1..13, plus `y` uniform in [-1,1]) | 5,900,000 | **0** |
 | unrestricted finite bit patterns | 20,000,000 | **0** |
 
-Two things this settles:
+And the other direction — how far the host routine is from it:
+
+| comparison | inputs | differing | worst gap |
+|---|---:|---:|---:|
+| `pow_glibc` vs `f64::powf` (the UCRT `pow`), in process, no oracle file | 5,900,000 | **4,926** (1 in 1,198) | **1 ulp** |
+
+That last row is the whole case for carrying a `pow` at all on this
+platform. It is measured by `pow_deterministic_vs_host_powf`, which runs
+everywhere and reports 0 on a glibc host — which is what makes it worth
+running.
+
+## 0.1 Native Linux x86-64 measurement (inherited)
+
+The macOS project closed §5 with: *"No differential run was made on a native
+x86-64 host."* The Linux sibling made that run, with oracle and routine on
+the same host, and it is reproduced here because §0 leans on it: it is what
+rules out the WSL2 crossing being load-bearing.
+
+| | |
+|---|---|
+| host | Ubuntu 24.04 x86-64, **glibc 2.39**, gcc 13.3.0, CPU with FMA |
+| oracle | `tools/pow_oracle.c`, built with the host `cc -O2`, calling the host `pow` |
+| harness | `tools/pow_differential.sh` → `logs/pow_differential.log` |
+| result | 5,900,000 domain inputs and 20,000,000 unrestricted inputs, **0 mismatches** (`evidence/linux-x86_64-glibc239/pow_differential.log`) |
+
+Two things these settle:
 
 * **The "ARM optimized-routines" provenance is not a portability problem
   here — it is the point.** That algorithm *is* what glibc ≥ 2.28 ships as
@@ -59,11 +101,20 @@ Method notes, so the run can be repeated rather than trusted:
   meaningless.
 
 **Still not claimed:** exhaustiveness (the input space is 2^128 pairs; 25.9M
-measured inputs is strong evidence, not proof), other glibc versions (2.39
-only — see `current_status.md` §5), musl hosts, and anything about the
-*other* libm functions. On glibc the rest of the libm surface needs no
-substitution, because the host libm is the one the references came from;
-that is a property of the platform, not of this routine.
+measured inputs is strong evidence, not proof), other glibc versions (the
+oracle is 2.39 only), Windows on ARM, and anything about the *other* libm
+functions.
+
+That last exclusion is much more serious on Windows than it was on Linux,
+and it must not be read as a footnote. `pow` is the **only** libm routine
+this port has taken off the host. `sin`, `cos`, `exp`, `ln`, `asin`, `acos`,
+`atan`, `sinh`, `cosh` and `acosh` still come from the Microsoft UCRT, and
+`tools/libm_fingerprint_win.sh` shows every one of them disagrees with
+glibc. A bit-exact `pow` therefore buys correctness in the step-size
+controllers — where `SUNRpowerR` lives, and where a 1-ulp error compounds
+across every step of every adaptive integrator — but it does not by itself
+buy byte-identical example output. See `current_status.md` §5 for what
+would.
 
 ---
 

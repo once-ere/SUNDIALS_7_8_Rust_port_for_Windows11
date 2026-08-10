@@ -1,6 +1,6 @@
 # Third-party notices
 
-Project: SUNDIALS_7_8_Rust_port_for_Linux (crate tree inherited from
+Project: SUNDIALS_7_8_Rust_port_for_Windows11 (crate tree inherited from
 SUNDIALS_7_8_Rust_port_for_AppleSilicon_macos).
 
 This workspace is a derivative work. Two upstream licences apply.
@@ -51,13 +51,15 @@ path**. Every other host-dependent function the library and the examples use
 — `sin`, `cos`, `asin`, `acos`, `atan`, `sinh`, `cosh`, `acosh`, `exp`, `ln`
 — is still `f64`'s method, which Rust `std` documents as having unspecified
 precision and forwards to whatever libm the host provides. On Linux that is
-glibc; on macOS/arm64 it is Apple's libm; on Windows it is the Microsoft CRT,
-and the three disagree in the last ulp. (`sqrt`, `mul_add`, `ceil`, `round`,
-`abs` and `copysign` are IEEE-754 specified and identical everywhere.) That
-residual host dependence, not this MIT-licensed routine, is why the
-byte-identity evidence in `VERIFICATION.md` is scoped to Linux on x86-64
-with glibc — the platform whose libm generated the upstream reference
-outputs. See `README.md` § "Platform scope".
+glibc; on macOS/arm64 it is Apple's libm; on Windows — this repository's
+target — it is the Microsoft UCRT, and the three disagree in the last ulp.
+(`sqrt`, `mul_add`, `ceil`, `round`, `abs` and `copysign` are IEEE-754
+specified and identical everywhere.) That residual host dependence, not this
+MIT-licensed routine, is why `VERIFICATION.md` Part A reports 125 of 199
+variants byte-identical on Windows rather than all of them: the references
+were generated on glibc, and every UCRT transcendental this port calls
+disagrees with it. See `README.md` § "Platform scope" and
+`current_status.md` §§4–5.
 
 ## glibc `rand()` — behaviourally reproduced
 
