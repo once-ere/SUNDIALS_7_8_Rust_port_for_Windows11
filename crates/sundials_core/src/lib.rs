@@ -56,6 +56,7 @@ pub mod sundials_band;
 pub mod sundials_cli;
 pub mod sundials_dense;
 pub mod sundials_direct;
+pub mod sundials_libm;
 pub mod sundials_math;
 pub mod sundials_stepper;
 pub mod sundomeigest_arnoldi;

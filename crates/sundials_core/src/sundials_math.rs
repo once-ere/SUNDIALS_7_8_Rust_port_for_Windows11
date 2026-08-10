@@ -364,17 +364,17 @@ const POW_LOG_TAB: [(u64, u64, u64); 128] = [
     (0x3fe6e00000000000, 0x3fd57bf753c8d000, 0x3d1fadedee5d40ef),
     (0x3fe6c00000000000, 0x3fd5d5bddf596000, 0xbd0a0b2a08a465dc),
 ];
-const EXP_INVLN2N: u64 = 0x40671547652b82fe;
-const EXP_SHIFT: u64 = 0x4338000000000000;
-const EXP_NEGLN2HIN: u64 = 0xbf762e42fefa0000;
-const EXP_NEGLN2LON: u64 = 0xbd0cf79abc9e3b3a;
-const EXP_POLY: [u64; 4] = [
+pub(crate) const EXP_INVLN2N: u64 = 0x40671547652b82fe;
+pub(crate) const EXP_SHIFT: u64 = 0x4338000000000000;
+pub(crate) const EXP_NEGLN2HIN: u64 = 0xbf762e42fefa0000;
+pub(crate) const EXP_NEGLN2LON: u64 = 0xbd0cf79abc9e3b3a;
+pub(crate) const EXP_POLY: [u64; 4] = [
     0x3fdffffffffffdbd,
     0x3fc555555555543c,
     0x3fa55555cf172b91,
     0x3f81111167a4d017,
 ];
-const EXP_TAB: [u64; 256] = [
+pub(crate) const EXP_TAB: [u64; 256] = [
     0x0000000000000000, 0x3ff0000000000000, 0x3c9b3b4f1a88bf6e, 0x3feff63da9fb3335,
     0xbc7160139cd8dc5d, 0x3fefec9a3e778061, 0xbc905e7a108766d1, 0x3fefe315e86e7f85,
     0x3c8cd2523567f613, 0x3fefd9b0d3158574, 0xbc8bce8023f98efa, 0x3fefd06b29ddf6de,
@@ -448,7 +448,7 @@ const BITS_ONE: u64 = 0x3ff0000000000000; /* 1.0 */
 const BITS_INF: u64 = 0x7ff0000000000000; /* infinity */
 
 /// Top 12 bits of a double (sign and exponent bits).
-fn pow_top12(x: f64) -> u32 {
+pub(crate) fn pow_top12(x: f64) -> u32 {
     (x.to_bits() >> 52) as u32
 }
 
@@ -462,11 +462,11 @@ fn pow_xflow(sign: u32, y: f64) -> f64 {
     (if sign != 0 { -y } else { y }) * y
 }
 
-fn pow_math_uflow(sign: u32) -> f64 {
+pub(crate) fn pow_math_uflow(sign: u32) -> f64 {
     pow_xflow(sign, f64::from_bits(0x1000000000000000)) /* 0x1p-767 */
 }
 
-fn pow_math_oflow(sign: u32) -> f64 {
+pub(crate) fn pow_math_oflow(sign: u32) -> f64 {
     pow_xflow(sign, f64::from_bits(0x7000000000000000)) /* 0x1p769 */
 }
 
@@ -526,7 +526,7 @@ fn pow_log_inline(ix: u64) -> (f64, f64) {
 
 /// C `specialcase`: handle exp results that overflow or underflow the
 /// normal scale*(1+tmp) evaluation.
-fn pow_exp_specialcase(tmp: f64, sbits: u64, ki: u64) -> f64 {
+pub(crate) fn pow_exp_specialcase(tmp: f64, sbits: u64, ki: u64) -> f64 {
     if (ki & 0x80000000) == 0 {
         /* k > 0, the exponent of scale might have overflowed by <= 460. */
         let sbits = sbits.wrapping_sub(1009u64 << 52);

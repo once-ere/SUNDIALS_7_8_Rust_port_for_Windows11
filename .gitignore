@@ -8,3 +8,7 @@
 # reference vectors.
 /*.csv
 /*.txt
+
+# LGPL upstream C sources fetched by tools/fetch_libm_sources.sh; not
+# committed (see NOTICE).
+/reference
