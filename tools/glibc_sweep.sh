@@ -2,7 +2,7 @@
 # glibc_sweep.sh — measure, rather than argue, that this port's platform
 # claim covers the Debian, Arch and Fedora families.
 #
-# README.md § "Distribution coverage" reasons that the claim carries
+# The Linux sibling repository reasons from this that the claim carries
 # because those distributions all ship glibc, so the libm behind `f64`'s
 # transcendental methods is the same implementation everywhere. That is a
 # testable statement: build tools/libm_probe.c in each distribution and
