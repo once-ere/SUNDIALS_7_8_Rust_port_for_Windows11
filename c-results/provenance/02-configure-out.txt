@@ -217,12 +217,15 @@ Call Stack (most recent call first):
 -- Performing Test COMPILER_HAS_DEPRECATED_MSG
 -- Performing Test COMPILER_HAS_DEPRECATED_MSG - Success
 -- Appending C RELEASE flags
+-- Found OpenMP_C: -openmp (found version "2.0")
+-- Found OpenMP: TRUE (found version "2.0")
 -- Performing Test COMPILER_HAS_DEPRECATED_ATTR
 -- Performing Test COMPILER_HAS_DEPRECATED_ATTR - Failed
 -- Performing Test COMPILER_HAS_DEPRECATED
 -- Performing Test COMPILER_HAS_DEPRECATED - Success
 -- Added NVECTOR_SERIAL module
 -- Added NVECTOR_MANYVECTOR module
+-- Added NVECTOR_OPENMP module
 -- Added SUNMATRIX_BAND module
 -- Added SUNMATRIX_DENSE module
 -- Added SUNMATRIX_SPARSE module
@@ -243,8 +246,8 @@ Call Stack (most recent call first):
 -- Added IDA module
 -- Added IDAS module
 -- Added KINSOL module
--- Configuring done (5.0s)
--- Generating done (0.3s)
+-- Configuring done (7.3s)
+-- Generating done (0.5s)
 CMake Warning:
   Manually-specified variables were not used by the project:
 

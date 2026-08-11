@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""provenance_manifest.py — checksum every input, binary and output, and check
-that the copy of the examples in this repository is the one that was compiled.
+"""provenance_manifest.py — checksum every input, binary and output.
 
     python tools/provenance_manifest.py
 
@@ -12,9 +11,10 @@ Writes:
     rust-results/provenance/21-binaries.sha256        the .exe files produced
     rust-results/provenance/22-outputs.sha256         captured Rust outputs
     differences/provenance/20-references.sha256       the shipped .out files
-    differences/provenance/21-tree-identity.txt       repo examples/ vs the
-                                                      upstream tree that was
-                                                      actually compiled
+    differences/provenance/21-source-of-each-artefact.txt  written separately;
+                                                      records that the
+                                                      examples were compiled
+                                                      from this repository
 
 Every line is `<sha256>  <path>`, the format `sha256sum -c` reads, so a reader
 can verify the whole set with one command.
@@ -59,8 +59,10 @@ def manifest(paths, out: Path, base: Path):
 
 def main():
     # ---- inputs actually compiled -----------------------------------------
-    c_src = [p for d in SERIAL for p in (UPSTREAM / "examples" / d).glob("*.c")]
-    manifest(c_src, ROOT / "c-results/provenance/20-input-sources.sha256", UPSTREAM)
+    # Every C example in THIS repository, all 29 directories — these are the
+    # files that were compiled (see 30-build-each-example.json).
+    c_src = list((ROOT / "examples").rglob("*.c"))
+    manifest(c_src, ROOT / "c-results/provenance/20-input-sources.sha256", ROOT)
 
     rs_src = [p for d in SERIAL
               for p in (ROOT / "crates" / CRATE_OF[d] / "examples").glob("*.rs")]
@@ -79,49 +81,12 @@ def main():
              ROOT / "rust-results/provenance/22-outputs.sha256", ROOT / "rust-results/outputs")
 
     # ---- the shipped reference outputs ------------------------------------
-    refs = [p for d in SERIAL for p in (ROOT / "examples" / d).glob("*.out")]
+    refs = list((ROOT / "examples").rglob("*.out"))
     manifest(refs, ROOT / "differences/provenance/20-references.sha256", ROOT / "examples")
 
-    # ---- chain of custody: is the repo copy the thing that was compiled? ---
-    out = ROOT / "differences/provenance/21-tree-identity.txt"
-    lines = [
-        "Chain of custody for the example sources",
-        "=" * 72,
-        "",
-        "The C build compiled from the upstream tree:",
-        f"    {UPSTREAM}\\examples\\",
-        "The repository holds a copy at:",
-        f"    {ROOT}\\examples\\",
-        "",
-        "If every file below is 'identical', the copy in this repository is",
-        "byte-for-byte the source that was compiled, and a reader can audit the",
-        "build using the repository alone.",
-        "",
-    ]
-    same = diff = missing = 0
-    for d in SERIAL:
-        for up in sorted((UPSTREAM / "examples" / d).glob("*")):
-            if not up.is_file():
-                continue
-            here = ROOT / "examples" / d / up.name
-            if not here.exists():
-                lines.append(f"MISSING    {d}/{up.name}")
-                missing += 1
-            elif sha(up) == sha(here):
-                same += 1
-            else:
-                lines.append(f"DIFFERENT  {d}/{up.name}")
-                diff += 1
-    lines += [
-        "",
-        f"identical : {same}",
-        f"different : {diff}",
-        f"missing   : {missing}",
-        "",
-        "(Only differing or missing files are listed individually above.)",
-    ]
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
-    print(f"{out.relative_to(ROOT).as_posix():52s} identical={same} different={diff} missing={missing}")
+    # The examples are compiled from this repository's own copy; that is
+    # established by the recorded cl.exe command lines, not by comparing the
+    # copy to its original. See differences/provenance/21-source-of-each-artefact.txt
     return 0
 
 

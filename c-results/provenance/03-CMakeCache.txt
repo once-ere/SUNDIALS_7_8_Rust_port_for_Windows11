@@ -284,7 +284,7 @@ ENABLE_LAPACK:UNINITIALIZED=OFF
 ENABLE_MPI:UNINITIALIZED=OFF
 
 //No help, variable specified on the command line.
-ENABLE_OPENMP:UNINITIALIZED=OFF
+ENABLE_OPENMP:UNINITIALIZED=ON
 
 //No help, variable specified on the command line.
 ENABLE_PETSC:UNINITIALIZED=OFF
@@ -354,6 +354,12 @@ MAGMA_DIR:PATH=
 
 //Path to root of oneMKL installation
 ONEMKL_DIR:PATH=
+
+//C compiler flags for OpenMP parallelization
+OpenMP_C_FLAGS:STRING=-openmp
+
+//C compiler libraries for OpenMP parallelization
+OpenMP_C_LIB_NAMES:STRING=
 
 //PETSc architecture (optional)
 PETSC_ARCH:STRING=
@@ -515,6 +521,9 @@ SUNDIALS_ENABLE_MPI:BOOL=OFF
 //Enable the NVECTOR_MANYVECTOR module
 SUNDIALS_ENABLE_NVECTOR_MANYVECTOR:BOOL=ON
 
+//Enable the NVECTOR_OPENMP module
+SUNDIALS_ENABLE_NVECTOR_OPENMP:BOOL=ON
+
 //Enable oneMKL support
 SUNDIALS_ENABLE_ONEMKL:BOOL=OFF
 
@@ -522,7 +531,7 @@ SUNDIALS_ENABLE_ONEMKL:BOOL=OFF
 SUNDIALS_ENABLE_ONEMKL_CHECKS:BOOL=ON
 
 //Enable OpenMP support
-SUNDIALS_ENABLE_OPENMP:BOOL=OFF
+SUNDIALS_ENABLE_OPENMP:BOOL=ON
 
 //Enable OpenMP device offloading support
 SUNDIALS_ENABLE_OPENMP_DEVICE:BOOL=OFF
@@ -822,7 +831,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_MT
 CMAKE_MT-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=52
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=59
 //Platform information initialized
 CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //noop for ranlib
@@ -877,6 +886,10 @@ COMPILER_HAS_DEPRECATED_ATTR:INTERNAL=
 COMPILER_HAS_DEPRECATED_MSG:INTERNAL=1
 //Result of TRY_COMPILE
 COMPILE_OK:INTERNAL=FALSE
+//Details about finding OpenMP
+FIND_PACKAGE_MESSAGE_DETAILS_OpenMP:INTERNAL=[TRUE][ ][v2.0()]
+//Details about finding OpenMP_C
+FIND_PACKAGE_MESSAGE_DETAILS_OpenMP_C:INTERNAL=[-openmp][v2.0()]
 //ADVANCED property for variable: GIT_EXECUTABLE
 GIT_EXECUTABLE-ADVANCED:INTERNAL=1
 //CHECK_TYPE_SIZE: sizeof(int64_t)
@@ -889,6 +902,19 @@ HAVE_STDDEF_H:INTERNAL=1
 HAVE_STDINT_H:INTERNAL=1
 //Have include sys/types.h
 HAVE_SYS_TYPES_H:INTERNAL=1
+//Result of TRY_COMPILE
+OpenMP_COMPILE_RESULT_C_openmp:INTERNAL=TRUE
+OpenMP_CXX_VERSION:INTERNAL=
+//ADVANCED property for variable: OpenMP_C_FLAGS
+OpenMP_C_FLAGS-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: OpenMP_C_LIB_NAMES
+OpenMP_C_LIB_NAMES-ADVANCED:INTERNAL=1
+//C compiler's OpenMP specification date
+OpenMP_C_SPEC_DATE:INTERNAL=200203
+OpenMP_C_VERSION:INTERNAL=2.0
+OpenMP_Fortran_VERSION:INTERNAL=
+//Result of TRY_COMPILE
+OpenMP_SPECTEST_C_:INTERNAL=TRUE
 //ADVANCED property for variable: PETSC_INCLUDES
 PETSC_INCLUDES-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PETSC_LIBRARIES
@@ -945,6 +971,8 @@ SUNDIALS_ENABLE_MAGMA_CHECKS-ADVANCED:INTERNAL=1
 SUNDIALS_ENABLE_MEMORY_SANITIZER-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: SUNDIALS_ENABLE_NVECTOR_MANYVECTOR
 SUNDIALS_ENABLE_NVECTOR_MANYVECTOR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: SUNDIALS_ENABLE_NVECTOR_OPENMP
+SUNDIALS_ENABLE_NVECTOR_OPENMP-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: SUNDIALS_ENABLE_ONEMKL_CHECKS
 SUNDIALS_ENABLE_ONEMKL_CHECKS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: SUNDIALS_ENABLE_OPENMP_DEVICE_CHECKS
@@ -1017,6 +1045,6 @@ _EXAMPLES_C_COMPILER:INTERNAL=C:/Program Files/Microsoft Visual Studio/18/Profes
 _GNUInstallDirs_LAST_CMAKE_INSTALL_PREFIX:INTERNAL=C:/Program Files (x86)/SUNDIALS
 _SHARED_LIB_SUFFIX:INTERNAL=_shared
 _STATIC_LIB_SUFFIX:INTERNAL=_static
-_SUNDIALS_ALIAS_TARGETS:INTERNAL=sundials_kinsol->sundials_kinsol_static;sundials_idas->sundials_idas_static;sundials_ida->sundials_ida_static;sundials_cvodes->sundials_cvodes_static;sundials_cvode->sundials_cvode_static;sundials_arkode->sundials_arkode_static;sundials_sundomeigestpower->sundials_sundomeigestpower_static;sundials_sunnonlinsolauto->sundials_sunnonlinsolauto_static;sundials_sunnonlinsolfixedpoint->sundials_sunnonlinsolfixedpoint_static;sundials_sunnonlinsolnewton->sundials_sunnonlinsolnewton_static;sundials_sunlinsolsptfqmr->sundials_sunlinsolsptfqmr_static;sundials_sunlinsolspgmr->sundials_sunlinsolspgmr_static;sundials_sunlinsolspfgmr->sundials_sunlinsolspfgmr_static;sundials_sunlinsolspbcgs->sundials_sunlinsolspbcgs_static;sundials_sunlinsolpcg->sundials_sunlinsolpcg_static;sundials_sunlinsoldense->sundials_sunlinsoldense_static;sundials_sunlinsolband->sundials_sunlinsolband_static;sundials_sunmatrixsparse->sundials_sunmatrixsparse_static;sundials_sunmatrixdense->sundials_sunmatrixdense_static;sundials_sunmatrixband->sundials_sunmatrixband_static;sundials_nvecmanyvector->sundials_nvecmanyvector_static;sundials_nvecserial->sundials_nvecserial_static;sundials_core->sundials_core_static;
-_SUNDIALS_INSTALLED_COMPONENTS:INTERNAL=kinsol;idas;ida;cvodes;cvode;arkode;sundomeigestpower;sunnonlinsolauto;sunnonlinsolfixedpoint;sunnonlinsolnewton;sunlinsolsptfqmr;sunlinsolspgmr;sunlinsolspfgmr;sunlinsolspbcgs;sunlinsolpcg;sunlinsoldense;sunlinsolband;sunmatrixsparse;sunmatrixdense;sunmatrixband;nvecmanyvector;nvecserial;core;
+_SUNDIALS_ALIAS_TARGETS:INTERNAL=sundials_kinsol->sundials_kinsol_static;sundials_idas->sundials_idas_static;sundials_ida->sundials_ida_static;sundials_cvodes->sundials_cvodes_static;sundials_cvode->sundials_cvode_static;sundials_arkode->sundials_arkode_static;sundials_sundomeigestpower->sundials_sundomeigestpower_static;sundials_sunnonlinsolauto->sundials_sunnonlinsolauto_static;sundials_sunnonlinsolfixedpoint->sundials_sunnonlinsolfixedpoint_static;sundials_sunnonlinsolnewton->sundials_sunnonlinsolnewton_static;sundials_sunlinsolsptfqmr->sundials_sunlinsolsptfqmr_static;sundials_sunlinsolspgmr->sundials_sunlinsolspgmr_static;sundials_sunlinsolspfgmr->sundials_sunlinsolspfgmr_static;sundials_sunlinsolspbcgs->sundials_sunlinsolspbcgs_static;sundials_sunlinsolpcg->sundials_sunlinsolpcg_static;sundials_sunlinsoldense->sundials_sunlinsoldense_static;sundials_sunlinsolband->sundials_sunlinsolband_static;sundials_sunmatrixsparse->sundials_sunmatrixsparse_static;sundials_sunmatrixdense->sundials_sunmatrixdense_static;sundials_sunmatrixband->sundials_sunmatrixband_static;sundials_nvecopenmp->sundials_nvecopenmp_static;sundials_nvecmanyvector->sundials_nvecmanyvector_static;sundials_nvecserial->sundials_nvecserial_static;sundials_core->sundials_core_static;
+_SUNDIALS_INSTALLED_COMPONENTS:INTERNAL=kinsol;idas;ida;cvodes;cvode;arkode;sundomeigestpower;sunnonlinsolauto;sunnonlinsolfixedpoint;sunnonlinsolnewton;sunlinsolsptfqmr;sunlinsolspgmr;sunlinsolspfgmr;sunlinsolspbcgs;sunlinsolpcg;sunlinsoldense;sunlinsolband;sunmatrixsparse;sunmatrixdense;sunmatrixband;nvecopenmp;nvecmanyvector;nvecserial;core;
 

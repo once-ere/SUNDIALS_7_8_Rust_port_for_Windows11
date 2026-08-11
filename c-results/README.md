@@ -8,8 +8,8 @@ written to.
 
 | item | value |
 |---|---|
-| generated | `2026-08-11T01:07:34Z` |
-| repository commit | `d3aa173` |
+| generated | `2026-08-11T12:34:51Z` |
+| repository commit | `bc4e2b3` |
 | operating system | Microsoft Windows 11 Pro for Workstations 10.0.26200.0 |
 | CPU | Intel(R) Core(TM) Ultra 9 275HX |
 | C compiler | Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36246 for x64 |
@@ -37,9 +37,9 @@ all of it yourself.
 | [`provenance/01-configure-cmd.txt`](provenance/01-configure-cmd.txt) | the literal `cmake` configure command line |
 | [`provenance/02-configure-out.txt`](provenance/02-configure-out.txt) | everything CMake printed |
 | [`provenance/03-CMakeCache.txt`](provenance/03-CMakeCache.txt) | every option CMake resolved, including defaults |
-| [`provenance/04-compile_commands.json`](provenance/04-compile_commands.json) | **the exact `cl.exe` line for each of the 235 translation units** |
+| [`provenance/04-compile_commands.json`](provenance/04-compile_commands.json) | **the exact `cl.exe` line for each of the 245 translation units** |
 | [`provenance/05-build-cmd.txt`](provenance/05-build-cmd.txt) | the literal build command line |
-| [`provenance/06-build-out.txt`](provenance/06-build-out.txt) | `ninja -v`: every compile *and link* as executed (363 lines) |
+| [`provenance/06-build-out.txt`](provenance/06-build-out.txt) | `ninja -v`: every compile *and link* as executed (388 lines) |
 | [`provenance/10-lapacksub-cmd.txt`](provenance/10-lapacksub-cmd.txt) | for each `*L` example, every line that differs from upstream, and the `cl.exe` line used |
 | [`provenance/11-lapacksub-out.txt`](provenance/11-lapacksub-out.txt) | compiler/linker output for those four |
 | [`provenance/20-input-sources.sha256`](provenance/20-input-sources.sha256) | SHA-256 of every C source compiled |
@@ -62,7 +62,7 @@ cmake -G Ninja -S "C:\Users\nsh\Developer\sundials-7.8.0" -B "C:\Users\nsh\Devel
   -DSUNDIALS_INDEX_SIZE=64 ^
   -DSUNDIALS_PRECISION=double ^
   -DENABLE_LAPACK=OFF -DENABLE_KLU=OFF -DENABLE_SUPERLUMT=OFF ^
-  -DENABLE_SUPERLUDIST=OFF -DENABLE_MPI=OFF -DENABLE_OPENMP=OFF ^
+  -DENABLE_SUPERLUDIST=OFF -DENABLE_MPI=OFF -DENABLE_OPENMP=ON ^
   -DENABLE_PTHREAD=OFF -DENABLE_HYPRE=OFF -DENABLE_PETSC=OFF ^
   -DENABLE_TRILINOS=OFF -DENABLE_CUDA=OFF -DENABLE_HIP=OFF ^
   -DENABLE_SYCL=OFF -DENABLE_RAJA=OFF -DENABLE_KOKKOS=OFF ^
@@ -100,29 +100,28 @@ and double precision as configured. Nothing is inferred here — read the JSON.
 
 ## Results
 
-### Scope, and why it is what it is
+### Scope — every C example in the repository was attempted
 
-The comparison covers the **six serial example directories** — `cvode/serial`,
-`cvodes/serial`, `kinsol/serial`, `ida/serial`, `idas/serial` and
-`arkode/C_serial` — which hold 128 C programs and, through the argv variants
-their `CMakeLists.txt` files declare, **199 reference outputs**. Twenty of
-those programs need KLU or SuperLU_MT and are excluded on *both* sides, so the
-two sides are compared over exactly the same 179 variants.
+There is no pre-selected subset here. All **180 `.c` files** under
+`examples/` were compiled one at a time, and all **258 (example, argv)
+variants** declared by the `CMakeLists.txt` files of all **29 example
+directories** were run. Where a program did not build, the compiler's own
+error is recorded per file in
+[`../c-results/provenance/31-build-each-example.txt`](../c-results/provenance/31-build-each-example.txt)
+— nothing is excluded by assumption.
 
-Every other directory in `examples/` is outside this comparison because it
-needs a backend that is present on neither side: MPI (`parallel`,
-`C_parallel`, `C_mpimanyvector`), OpenMP (`C_openmp`), OpenMP device offload
-(`C_openmpdev`), PETSc, *hypre* (`parhyp`), CUDA, HIP, SYCL, RAJA, Kokkos,
-Ginkgo, Trilinos, SuperLU_DIST, ManyVector, XBraid, and the C++ and Fortran
-2003 interfaces. `c-results/EXCLUSIONS.md` lists them program by program.
+The C++ (46), Fortran (51) and CUDA (7) sources are not covered: they are not
+C, and this project is a C-to-Rust port.
 
 | outcome | variants |
 |---|---:|
-| ran to completion (exit 0) | **179** |
+| C source files attempted | **180** |
+| of those, built | **114** |
+| ran to completion (exit 0) | **189** |
 | of those, printed a solver error anyway | **1** |
-| non-zero exit or timeout | **0** |
+| non-zero exit or timeout | **49** |
 | excluded (KLU / SuperLU_MT) | **20** |
-| total | 199 |
+| total | 258 |
 
 Against the reference outputs shipped with SUNDIALS 7.8.0:
 

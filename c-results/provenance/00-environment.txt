@@ -9,7 +9,7 @@ Microsoft Windows 11 Pro for Workstations
 Intel(R) Core(TM) Ultra 9 275HX
 
 == build started (UTC) ==
-2026-08-11T01:02:55Z
+2026-08-11T12:30:03Z
 
 == cl.exe path and banner ==
 C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\cl.exe
@@ -50,4 +50,4 @@ C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Tools\MSVC\14.51.362
 C:\Users\nsh\Developer\sundials-7.8.0
 
 == build finished (UTC) ==
-2026-08-11T01:03:05Z
+2026-08-11T12:30:16Z

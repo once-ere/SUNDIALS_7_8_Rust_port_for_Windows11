@@ -7,8 +7,8 @@ session, over the same 199 variants.
 
 | item | value |
 |---|---|
-| generated | `2026-08-11T01:07:34Z` |
-| repository commit | `d3aa173` |
+| generated | `2026-08-11T12:34:51Z` |
+| repository commit | `bc4e2b3` |
 | operating system | Microsoft Windows 11 Pro for Workstations 10.0.26200.0 |
 | CPU | Intel(R) Core(TM) Ultra 9 275HX |
 | C compiler | Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36246 for x64 |
@@ -85,29 +85,28 @@ single most important fact for reading [`../differences/`](../differences/):
 
 ## Results
 
-### Scope, and why it is what it is
+### Scope — every C example in the repository was attempted
 
-The comparison covers the **six serial example directories** — `cvode/serial`,
-`cvodes/serial`, `kinsol/serial`, `ida/serial`, `idas/serial` and
-`arkode/C_serial` — which hold 128 C programs and, through the argv variants
-their `CMakeLists.txt` files declare, **199 reference outputs**. Twenty of
-those programs need KLU or SuperLU_MT and are excluded on *both* sides, so the
-two sides are compared over exactly the same 179 variants.
+There is no pre-selected subset here. All **180 `.c` files** under
+`examples/` were compiled one at a time, and all **258 (example, argv)
+variants** declared by the `CMakeLists.txt` files of all **29 example
+directories** were run. Where a program did not build, the compiler's own
+error is recorded per file in
+[`../c-results/provenance/31-build-each-example.txt`](../c-results/provenance/31-build-each-example.txt)
+— nothing is excluded by assumption.
 
-Every other directory in `examples/` is outside this comparison because it
-needs a backend that is present on neither side: MPI (`parallel`,
-`C_parallel`, `C_mpimanyvector`), OpenMP (`C_openmp`), OpenMP device offload
-(`C_openmpdev`), PETSc, *hypre* (`parhyp`), CUDA, HIP, SYCL, RAJA, Kokkos,
-Ginkgo, Trilinos, SuperLU_DIST, ManyVector, XBraid, and the C++ and Fortran
-2003 interfaces. `c-results/EXCLUSIONS.md` lists them program by program.
+The C++ (46), Fortran (51) and CUDA (7) sources are not covered: they are not
+C, and this project is a C-to-Rust port.
 
 | outcome | variants |
 |---|---:|
+| variants whose example is ported to Rust | **179** |
+| variants with no Rust counterpart | **59** |
 | ran to completion (exit 0) | **179** |
 | of those, printed a solver error anyway | **0** |
-| non-zero exit or timeout | **0** |
+| non-zero exit or timeout | **59** |
 | excluded (KLU / SuperLU_MT) | **20** |
-| total | 199 |
+| total | 258 |
 
 Against the reference outputs shipped with SUNDIALS 7.8.0:
 

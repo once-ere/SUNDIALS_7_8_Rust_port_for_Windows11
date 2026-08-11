@@ -205,3 +205,62 @@
 | `ark_robertson` |  | same |  | same | same |  |
 | `ark_twowaycouple_mri` |  | same |  | same | same |  |
 | `ark_brusselator_fp` | `1` | same |  | same | same |  |
+| `ark_brusselator1D_klu` |  | **missing** |  | missing | missing |  |
+| `ark_brusselator1D_manyvec` |  | **missing** |  | content | missing |  |
+| `ark_brusselator1D_omp` | `4` | **missing** |  | missing | missing |  |
+| `ark_heat1D_omp` | `4` | **missing** |  | missing | missing |  |
+| `ark_analytic_nonlin_ompdev` | `4` | **missing** |  | missing | missing |  |
+| `ark_heat1D_ompdev` | `4` | **missing** |  | missing | missing |  |
+| `ark_heat1D_adapt_ompdev` | `4` | **missing** |  | missing | missing |  |
+| `ark_diurnal_kry_p` |  | **missing** |  | missing | missing |  |
+| `ark_diurnal_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `ark_brusselator1D_task_local_nls` | `--monitor` | **missing** |  | missing | missing |  |
+| `ark_brusselator1D_task_local_nls` | `--monitor --global-nls` | **missing** |  | missing | missing |  |
+| `ark_brusselator1D_task_local_nls` | `--monitor --explicit --tf 3` | **missing** |  | missing | missing |  |
+| `ark_diurnal_kry_ph` | `1` | **missing** |  | missing | missing |  |
+| `ark_petsc_ex25` | `1` | **missing** |  | missing | missing |  |
+| `ark_brusselator1D_FEM_slu` |  | **missing** |  | missing | missing |  |
+| `cvDiurnal_kry_mpimanyvec` | `2` | **missing** |  | missing | missing |  |
+| `cvAdvDiff_bnd_omp` | `4` | **missing** |  | missing | missing |  |
+| `cvAdvDiff_kry_ompdev` | `4` | **missing** |  | missing | missing |  |
+| `cvAdvDiff_diag_p` | `2` | **missing** |  | missing | missing |  |
+| `cvAdvDiff_non_p` | `2` | **missing** |  | missing | missing |  |
+| `cvDiurnal_kry_bbd_p` | `2` | **missing** |  | missing | missing |  |
+| `cvDiurnal_kry_p` | `2` | **missing** |  | missing | missing |  |
+| `cvAdvDiff_non_ph` | `2` | **missing** |  | missing | missing |  |
+| `cv_petsc_ex7` | `1` | **missing** |  | missing | missing |  |
+| `cvAdvDiff_petsc` | `1` | **missing** |  | missing | missing |  |
+| `cvsAdvDiff_bnd_omp` | `4` | **missing** |  | missing | missing |  |
+| `cvsAdvDiff_ASAp_non_p` |  | **missing** |  | missing | missing |  |
+| `cvsAdvDiff_FSA_non_p` | `-sensi stg t` | **missing** |  | missing | missing |  |
+| `cvsAdvDiff_FSA_non_p` | `-sensi sim t` | **missing** |  | missing | missing |  |
+| `cvsAdvDiff_non_p` |  | **missing** |  | missing | missing |  |
+| `cvsAtmDisp_ASAi_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `cvsDiurnal_FSA_kry_p` | `-sensi stg t` | **missing** |  | missing | missing |  |
+| `cvsDiurnal_FSA_kry_p` | `-sensi sim t` | **missing** |  | missing | missing |  |
+| `cvsDiurnal_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `cvsDiurnal_kry_p` |  | **missing** |  | missing | missing |  |
+| `idaFoodWeb_bnd_omp` | `4` | **missing** |  | missing | missing |  |
+| `idaFoodWeb_kry_omp` | `4` | **missing** |  | missing | missing |  |
+| `idaFoodWeb_kry_bbd_p` | `1` | **missing** |  | missing | missing |  |
+| `idaFoodWeb_kry_p` | `1` | **missing** |  | missing | missing |  |
+| `idaHeat2D_kry_bbd_p` | `1` | **missing** |  | missing | missing |  |
+| `idaHeat2D_kry_p` | `1` | **missing** |  | missing | missing |  |
+| `idaHeat2D_petsc_spgmr` |  | **missing** |  | missing | missing |  |
+| `idaHeat2D_petsc_snes` |  | **missing** |  | missing | missing |  |
+| `idaHeat2D_petsc_snes` | `-pre` | **missing** |  | missing | missing |  |
+| `idaHeat2D_petsc_snes` | `-jac` | **missing** |  | missing | missing |  |
+| `idaHeat2D_petsc_snes` | `-jac -pre` | **missing** |  | missing | missing |  |
+| `idasFoodWeb_bnd_omp` | `4` | **missing** |  | missing | missing |  |
+| `idasFoodWeb_kry_omp` | `4` | **missing** |  | missing | missing |  |
+| `idasBruss_ASAp_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `idasBruss_FSA_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `idasBruss_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `idasFoodWeb_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `idasFoodWeb_kry_p` |  | **missing** |  | missing | missing |  |
+| `idasHeat2D_FSA_kry_bbd_p` | `-sensi stg t` | **missing** |  | missing | missing |  |
+| `idasHeat2D_kry_bbd_p` |  | **missing** |  | missing | missing |  |
+| `idasHeat2D_kry_p` |  | **missing** |  | missing | missing |  |
+| `kinFoodWeb_kry_omp` | `4` | **missing** |  | missing | missing |  |
+| `kinFoodWeb_kry_bbd_p` | `1` | **missing** |  | missing | missing |  |
+| `kinFoodWeb_kry_p` | `1` | **missing** |  | missing | missing |  |

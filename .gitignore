@@ -17,3 +17,6 @@
 /logs/c-build
 /logs/run
 /logs/example_matrix_state.json
+
+# Stray run artefacts some examples write into the working directory.
+/win11-out.txt-*

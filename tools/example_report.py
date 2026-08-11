@@ -32,6 +32,32 @@ NOISE = re.compile(r"Total run time|CPU time|cpu time|wall clock")
 ERRMARK = re.compile(r"SUNDIALS_ERROR|\[ERROR\]|failed with retval|mxstep steps taken")
 
 state = json.loads((ROOT / "logs" / "example_matrix_state.json").read_text())
+_bj = ROOT / "c-results/provenance/30-build-each-example.json"
+CBUILD = {r["name"]: r for r in json.loads(_bj.read_text(encoding="utf-8"))} if _bj.exists() else {}
+
+
+def build_reason(name):
+    """Why a C example has no binary, in the compiler's own words."""
+    r = CBUILD.get(name)
+    if r is None:
+        return "not attempted"
+    if r["ok"]:
+        return "built"
+    o = r["output"]
+    m = re.search(r"C1083: Cannot open include file: '([^']+)'", o)
+    if m:
+        return f"missing header `{m.group(1)}`"
+    if "C3001" in o and "target" in o:
+        return "MSVC rejects `#pragma omp target` (OpenMP 4.5 device offload)"
+    if "LNK2019" in o:
+        # The four *L examples fail the plain build (no LAPACK is installed)
+        # and are then built by tools/build_c_lapack_substituted.cmd with the
+        # same two-token substitution the Rust port makes.
+        if (ROOT / "logs/c-build/bin" / (name + ".exe")).exists():
+            return "built via documented LAPACK->native substitution"
+        return "unresolved external (LAPACK)"
+    return f"build failed (exit {r['returncode']})"
+
 ROWS, PROV = state["rows"], state["prov"]
 
 
@@ -83,6 +109,12 @@ for r in ROWS:
 
 live = [r for r in recs if not r["c_state"].startswith("excluded")]
 excl = [r for r in recs if r["c_state"].startswith("excluded")]
+# Comparable = both sides actually produced output.
+both = [r for r in recs if r["c_state"] == "ran" and r["rust_state"] == "ran"]
+c_only = [r for r in recs if r["c_state"] == "ran" and r["rust_state"] == "NO-BINARY"]
+rust_only = [r for r in recs if r["rust_state"] == "ran" and r["c_state"] == "NO-BINARY"]
+neither_ran = [r for r in recs if r["c_state"] != "ran" and r["rust_state"] != "ran"
+               and not r["c_state"].startswith("excluded")]
 
 
 def tally(field, among=live):
@@ -92,7 +124,9 @@ def tally(field, among=live):
     return out
 
 
-T_CR, T_CREF, T_RREF = tally("c_rust"), tally("c_ref"), tally("rust_ref")
+T_CR = tally('c_rust', both)
+T_CREF = tally('c_ref', both)
+T_RREF = tally('rust_ref', both)
 PROV_BLOCK = f"""
 | item | value |
 |---|---|
@@ -106,23 +140,21 @@ PROV_BLOCK = f"""
 | upstream sources | SUNDIALS 7.8.0, `examples/` as copied into this repository |
 """
 
-SCOPE = """
-### Scope, and why it is what it is
+SCOPE = f"""
+### Scope — every C example in the repository was attempted
 
-The comparison covers the **six serial example directories** — `cvode/serial`,
-`cvodes/serial`, `kinsol/serial`, `ida/serial`, `idas/serial` and
-`arkode/C_serial` — which hold 128 C programs and, through the argv variants
-their `CMakeLists.txt` files declare, **199 reference outputs**. Twenty of
-those programs need KLU or SuperLU_MT and are excluded on *both* sides, so the
-two sides are compared over exactly the same 179 variants.
+There is no pre-selected subset here. All **180 `.c` files** under
+`examples/` were compiled one at a time, and all **{len(recs)} (example, argv)
+variants** declared by the `CMakeLists.txt` files of all **29 example
+directories** were run. Where a program did not build, the compiler's own
+error is recorded per file in
+[`../c-results/provenance/31-build-each-example.txt`](../c-results/provenance/31-build-each-example.txt)
+— nothing is excluded by assumption.
 
-Every other directory in `examples/` is outside this comparison because it
-needs a backend that is present on neither side: MPI (`parallel`,
-`C_parallel`, `C_mpimanyvector`), OpenMP (`C_openmp`), OpenMP device offload
-(`C_openmpdev`), PETSc, *hypre* (`parhyp`), CUDA, HIP, SYCL, RAJA, Kokkos,
-Ginkgo, Trilinos, SuperLU_DIST, ManyVector, XBraid, and the C++ and Fortran
-2003 interfaces. `c-results/EXCLUSIONS.md` lists them program by program.
+The C++ (46), Fortran (51) and CUDA (7) sources are not covered: they are not
+C, and this project is a C-to-Rust port.
 """
+
 
 
 
@@ -255,6 +287,8 @@ and double precision as configured. Nothing is inferred here — read the JSON.
 {SCOPE}
 | outcome | variants |
 |---|---:|
+| C source files attempted | **{len(CBUILD)}** |
+| of those, built | **{sum(1 for r in CBUILD.values() if r['ok'])}** |
 | ran to completion (exit 0) | **{sum(1 for r in live if r['c_state'] == 'ran')}** |
 | of those, printed a solver error anyway | **{sum(1 for r in live if r['c_err'])}** |
 | non-zero exit or timeout | **{sum(1 for r in live if r['c_state'] != 'ran')}** |
@@ -310,7 +344,8 @@ build's output against the reference `.out` shipped with SUNDIALS 7.8.0,
 after removing timing lines from both sides.
 
 {md_table(recs, cols_side + [
-    ("status", lambda r: r["c_state"]),
+    ("build", lambda r: build_reason(r["name"])),
+    ("run", lambda r: r["c_state"]),
     ("solver error", lambda r: "**YES**" if r["c_err"] else ""),
     ("bytes", lambda r: state["c"][r["outfile"]]["bytes"]),
     ("vs shipped ref", lambda r: r["c_ref"] if not r["c_state"].startswith("excluded") else "—"),
@@ -380,6 +415,8 @@ single most important fact for reading [`../differences/`](../differences/):
 {SCOPE}
 | outcome | variants |
 |---|---:|
+| variants whose example is ported to Rust | **{sum(1 for r in live if r['crate'])}** |
+| variants with no Rust counterpart | **{sum(1 for r in live if not r['crate'])}** |
 | ran to completion (exit 0) | **{sum(1 for r in live if r['rust_state'] == 'ran')}** |
 | of those, printed a solver error anyway | **{sum(1 for r in live if r['rust_err'])}** |
 | non-zero exit or timeout | **{sum(1 for r in live if r['rust_state'] != 'ran')}** |
@@ -413,7 +450,8 @@ describe this build's output against the reference `.out` shipped with
 SUNDIALS 7.8.0, after removing timing lines from both sides.
 
 {md_table(recs, cols_side + [
-    ("status", lambda r: r["rust_state"]),
+    ("ported", lambda r: "yes" if r["crate"] else "**no**"),
+    ("run", lambda r: r["rust_state"]),
     ("solver error", lambda r: "**YES**" if r["rust_err"] else ""),
     ("bytes", lambda r: state["rust"][r["outfile"]]["bytes"]),
     ("vs shipped ref", lambda r: r["rust_ref"] if not r["rust_state"].startswith("excluded") else "—"),
@@ -482,8 +520,8 @@ for r in live:
                                                     encoding="utf-8", newline="\n")
     ndiff += 1
 
-agree = [r for r in live if r["c_rust"] == "same"]
-disagree = [r for r in live if r["c_rust"] not in ("same", "missing")]
+agree = [r for r in both if r["c_rust"] == "same"]
+disagree = [r for r in both if r["c_rust"] not in ("same", "missing")]
 # For each disagreement, which side matches the shipped reference?
 rust_right = [r for r in disagree if r["rust_ref"] == "same" and r["c_ref"] != "same"]
 c_right = [r for r in disagree if r["c_ref"] == "same" and r["rust_ref"] != "same"]
@@ -521,7 +559,16 @@ and it is the only way to say which side is *right* when they disagree.
 
 ## Headline
 
-| | variants |
+| coverage | variants |
+|---|---:|
+| declared by the CMakeLists of all 29 example directories | {len(recs)} |
+| ran on **both** sides — the comparable set | **{len(both)}** |
+| ran on the C side only (no Rust counterpart) | **{len(c_only)}** |
+| ran on the Rust side only | {len(rust_only)} |
+| excluded on both sides (KLU / SuperLU_MT not installed) | {len(excl)} |
+| neither side could run (backend absent — see EXCLUSIONS) | {len(neither_ran)} |
+
+| comparison over the {len(both)} comparable variants | variants |
 |---|---:|
 | C and Rust byte-identical | **{len(agree)}** |
 | C and Rust differ | **{len(disagree)}** |

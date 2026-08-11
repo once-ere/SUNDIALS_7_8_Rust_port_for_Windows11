@@ -169,6 +169,12 @@
 },
 {
   "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Fosrc\\nvector\\openmp\\CMakeFiles\\sundials_nvecopenmp_obj_static.dir\\nvector_openmp.c.obj /Fdsrc\\nvector\\openmp\\CMakeFiles\\sundials_nvecopenmp_obj_static.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\nvector\\openmp\\nvector_openmp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/src/nvector/openmp/nvector_openmp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/src/nvector/openmp/CMakeFiles/sundials_nvecopenmp_obj_static.dir/nvector_openmp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Fosrc\\sunmatrix\\band\\CMakeFiles\\sundials_sunmatrixband_obj_static.dir\\sunmatrix_band.c.obj /Fdsrc\\sunmatrix\\band\\CMakeFiles\\sundials_sunmatrixband_obj_static.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sunmatrix\\band\\sunmatrix_band.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/src/sunmatrix/band/sunmatrix_band.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/src/sunmatrix/band/CMakeFiles/sundials_sunmatrixband_obj_static.dir/sunmatrix_band.c.obj"
@@ -991,6 +997,18 @@
 },
 {
   "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\arkode\\C_openmp\\CMakeFiles\\ark_brusselator1D_omp.dir\\ark_brusselator1D_omp.c.obj /Fdexamples\\arkode\\C_openmp\\CMakeFiles\\ark_brusselator1D_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\arkode\\C_openmp\\ark_brusselator1D_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/arkode/C_openmp/ark_brusselator1D_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/arkode/C_openmp/CMakeFiles/ark_brusselator1D_omp.dir/ark_brusselator1D_omp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\arkode\\C_openmp\\CMakeFiles\\ark_heat1D_omp.dir\\ark_heat1D_omp.c.obj /Fdexamples\\arkode\\C_openmp\\CMakeFiles\\ark_heat1D_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\arkode\\C_openmp\\ark_heat1D_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/arkode/C_openmp/ark_heat1D_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/arkode/C_openmp/CMakeFiles/ark_heat1D_omp.dir/ark_heat1D_omp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Foexamples\\cvode\\serial\\CMakeFiles\\cvAdvDiff_bnd.dir\\cvAdvDiff_bnd.c.obj /Fdexamples\\cvode\\serial\\CMakeFiles\\cvAdvDiff_bnd.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\cvode\\serial\\cvAdvDiff_bnd.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/cvode/serial/cvAdvDiff_bnd.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/cvode/serial/CMakeFiles/cvAdvDiff_bnd.dir/cvAdvDiff_bnd.c.obj"
@@ -1084,6 +1102,12 @@
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Foexamples\\cvode\\serial\\CMakeFiles\\cvVdp_auto_nls.dir\\cvVdp_auto_nls.c.obj /Fdexamples\\cvode\\serial\\CMakeFiles\\cvVdp_auto_nls.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\cvode\\serial\\cvVdp_auto_nls.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/cvode/serial/cvVdp_auto_nls.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/cvode/serial/CMakeFiles/cvVdp_auto_nls.dir/cvVdp_auto_nls.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\cvode\\C_openmp\\CMakeFiles\\cvAdvDiff_bnd_omp.dir\\cvAdvDiff_bnd_omp.c.obj /Fdexamples\\cvode\\C_openmp\\CMakeFiles\\cvAdvDiff_bnd_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\cvode\\C_openmp\\cvAdvDiff_bnd_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/cvode/C_openmp/cvAdvDiff_bnd_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/cvode/C_openmp/CMakeFiles/cvAdvDiff_bnd_omp.dir/cvAdvDiff_bnd_omp.c.obj"
 },
 {
   "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
@@ -1231,6 +1255,12 @@
 },
 {
   "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\cvodes\\C_openmp\\CMakeFiles\\cvsAdvDiff_bnd_omp.dir\\cvsAdvDiff_bnd_omp.c.obj /Fdexamples\\cvodes\\C_openmp\\CMakeFiles\\cvsAdvDiff_bnd_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\cvodes\\C_openmp\\cvsAdvDiff_bnd_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/cvodes/C_openmp/cvsAdvDiff_bnd_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/cvodes/C_openmp/CMakeFiles/cvsAdvDiff_bnd_omp.dir/cvsAdvDiff_bnd_omp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Foexamples\\ida\\serial\\CMakeFiles\\idaAnalytic_mels.dir\\idaAnalytic_mels.c.obj /Fdexamples\\ida\\serial\\CMakeFiles\\idaAnalytic_mels.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\ida\\serial\\idaAnalytic_mels.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/ida/serial/idaAnalytic_mels.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/ida/serial/CMakeFiles/idaAnalytic_mels.dir/idaAnalytic_mels.c.obj"
@@ -1276,6 +1306,18 @@
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Foexamples\\ida\\serial\\CMakeFiles\\idaSlCrank_dns.dir\\idaSlCrank_dns.c.obj /Fdexamples\\ida\\serial\\CMakeFiles\\idaSlCrank_dns.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\ida\\serial\\idaSlCrank_dns.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/ida/serial/idaSlCrank_dns.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/ida/serial/CMakeFiles/idaSlCrank_dns.dir/idaSlCrank_dns.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\ida\\C_openmp\\CMakeFiles\\idaFoodWeb_bnd_omp.dir\\idaFoodWeb_bnd_omp.c.obj /Fdexamples\\ida\\C_openmp\\CMakeFiles\\idaFoodWeb_bnd_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\ida\\C_openmp\\idaFoodWeb_bnd_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/ida/C_openmp/idaFoodWeb_bnd_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/ida/C_openmp/CMakeFiles/idaFoodWeb_bnd_omp.dir/idaFoodWeb_bnd_omp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\ida\\C_openmp\\CMakeFiles\\idaFoodWeb_kry_omp.dir\\idaFoodWeb_kry_omp.c.obj /Fdexamples\\ida\\C_openmp\\CMakeFiles\\idaFoodWeb_kry_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\ida\\C_openmp\\idaFoodWeb_kry_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/ida/C_openmp/idaFoodWeb_kry_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/ida/C_openmp/CMakeFiles/idaFoodWeb_kry_omp.dir/idaFoodWeb_kry_omp.c.obj"
 },
 {
   "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
@@ -1357,6 +1399,18 @@
 },
 {
   "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\idas\\C_openmp\\CMakeFiles\\idasFoodWeb_bnd_omp.dir\\idasFoodWeb_bnd_omp.c.obj /Fdexamples\\idas\\C_openmp\\CMakeFiles\\idasFoodWeb_bnd_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\idas\\C_openmp\\idasFoodWeb_bnd_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/idas/C_openmp/idasFoodWeb_bnd_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/idas/C_openmp/CMakeFiles/idasFoodWeb_bnd_omp.dir/idasFoodWeb_bnd_omp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\idas\\C_openmp\\CMakeFiles\\idasFoodWeb_kry_omp.dir\\idasFoodWeb_kry_omp.c.obj /Fdexamples\\idas\\C_openmp\\CMakeFiles\\idasFoodWeb_kry_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\idas\\C_openmp\\idasFoodWeb_kry_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/idas/C_openmp/idasFoodWeb_kry_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/idas/C_openmp/CMakeFiles/idasFoodWeb_kry_omp.dir/idasFoodWeb_kry_omp.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Foexamples\\kinsol\\serial\\CMakeFiles\\kinAnalytic_fp.dir\\kinAnalytic_fp.c.obj /Fdexamples\\kinsol\\serial\\CMakeFiles\\kinAnalytic_fp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\kinsol\\serial\\kinAnalytic_fp.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/kinsol/serial/kinAnalytic_fp.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/kinsol/serial/CMakeFiles/kinAnalytic_fp.dir/kinAnalytic_fp.c.obj"
@@ -1408,5 +1462,11 @@
   "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD /Foexamples\\kinsol\\serial\\CMakeFiles\\kinRoboKin_dns.dir\\kinRoboKin_dns.c.obj /Fdexamples\\kinsol\\serial\\CMakeFiles\\kinRoboKin_dns.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\kinsol\\serial\\kinRoboKin_dns.c",
   "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/kinsol/serial/kinRoboKin_dns.c",
   "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/kinsol/serial/CMakeFiles/kinRoboKin_dns.dir/kinRoboKin_dns.c.obj"
+},
+{
+  "directory": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build",
+  "command": "C:\\PROGRA~1\\MICROS~3\\18\\PROFES~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\include -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\include -IC:\\Users\\nsh\\Developer\\sundials-7.8.0\\src\\sundials -IC:\\Users\\nsh\\Developer\\github\\SUNDIALS_7_8_Rust_port_for_Windows11\\logs\\c-build\\src\\sundials /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD -openmp /Foexamples\\kinsol\\C_openmp\\CMakeFiles\\kinFoodWeb_kry_omp.dir\\kinFoodWeb_kry_omp.c.obj /Fdexamples\\kinsol\\C_openmp\\CMakeFiles\\kinFoodWeb_kry_omp.dir\\ /FS -c C:\\Users\\nsh\\Developer\\sundials-7.8.0\\examples\\kinsol\\C_openmp\\kinFoodWeb_kry_omp.c",
+  "file": "C:/Users/nsh/Developer/sundials-7.8.0/examples/kinsol/C_openmp/kinFoodWeb_kry_omp.c",
+  "output": "C:/Users/nsh/Developer/github/SUNDIALS_7_8_Rust_port_for_Windows11/logs/c-build/examples/kinsol/C_openmp/CMakeFiles/kinFoodWeb_kry_omp.dir/kinFoodWeb_kry_omp.c.obj"
 }
 ]

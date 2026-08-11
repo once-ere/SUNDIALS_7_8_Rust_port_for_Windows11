@@ -40,13 +40,40 @@ C_BIN = ROOT / "logs" / "c-build" / "bin"
 RUST_BIN = ROOT / "target" / "release" / "examples"
 RUN_ROOT = ROOT / "logs" / "run"
 
+# EVERY example directory that ships C sources and reference outputs — not
+# just the serial ones. `crate` is the Rust crate holding the ported example,
+# or None where the port has no counterpart (those rows are reported as
+# not-ported rather than quietly dropped).
 DIRS = [
-    ("cvode_rs", "cvode/serial"),
+    ("cvode_rs",  "cvode/serial"),
     ("cvodes_rs", "cvodes/serial"),
     ("kinsol_rs", "kinsol/serial"),
-    ("ida_rs", "ida/serial"),
-    ("idas_rs", "idas/serial"),
+    ("ida_rs",    "ida/serial"),
+    ("idas_rs",   "idas/serial"),
     ("arkode_rs", "arkode/C_serial"),
+    (None, "arkode/C_klu"),
+    (None, "arkode/C_manyvector"),
+    (None, "arkode/C_openmp"),
+    (None, "arkode/C_openmpdev"),
+    (None, "arkode/C_parallel"),
+    (None, "arkode/C_parhyp"),
+    (None, "arkode/C_petsc"),
+    (None, "arkode/C_superlu-mt"),
+    (None, "cvode/C_mpimanyvector"),
+    (None, "cvode/C_openmp"),
+    (None, "cvode/C_openmpdev"),
+    (None, "cvode/parallel"),
+    (None, "cvode/parhyp"),
+    (None, "cvode/petsc"),
+    (None, "cvodes/C_openmp"),
+    (None, "cvodes/parallel"),
+    (None, "ida/C_openmp"),
+    (None, "ida/parallel"),
+    (None, "ida/petsc"),
+    (None, "idas/C_openmp"),
+    (None, "idas/parallel"),
+    (None, "kinsol/C_openmp"),
+    (None, "kinsol/parallel"),
 ]
 
 KLU = {

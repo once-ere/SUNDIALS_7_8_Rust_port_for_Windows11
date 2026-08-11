@@ -56,9 +56,11 @@ Get-Content c-results\provenance\22-outputs.sha256 | ForEach-Object {
 "checked $((Get-Content c-results\provenance\22-outputs.sha256).Count) files"
 ```
 
-**Expected:** no `MISMATCH` lines, and `checked 179 files`.
+**Expected:** no `MISMATCH` lines, and `checked 189 files`.
 
-Repeat with `rust-results` in place of `c-results` (also 179 files).
+Repeat with `rust-results` in place of `c-results` (179 files there — the
+Rust port has no counterpart for the 10 OpenMP/ManyVector examples, see
+"What the evidence shows").
 
 On a machine with `sha256sum` (Git Bash, WSL, Linux, macOS) the same check is:
 
@@ -70,53 +72,62 @@ cd c-results/outputs && sha256sum -c ../provenance/22-outputs.sha256 | grep -v '
 
 ---
 
-## Check 2 — the sources in this repository are what was compiled
+## Check 2 — what was compiled from where
 
-The C build read from an upstream copy of SUNDIALS 7.8.0 outside this
-repository. So that you can audit it using the repository alone, every example
-file was compared byte for byte against that upstream tree:
-
-```
-Get-Content differences\provenance\21-tree-identity.txt
-```
-
-**Expected**, at the end of that file:
+The 180 C example files were compiled **directly from this
+repository's own `examples/` directory**. Confirm it from the recorded
+command lines:
 
 ```
-identical : 370
-different : 0
-missing   : 0
+python -c "import json,os;d=json.load(open('c-results/provenance/30-build-each-example.json'));m=os.path.join(os.getcwd(),'examples');print(sum(1 for r in d if m in r['command']),'of',len(d))"
 ```
 
-If `different` were not 0, the sources you can read here would not be the
-sources that were compiled, and nothing else in this repository could be
-trusted. It is 0.
+**Expected:** `180 of 180` — every compile command names a
+path inside this repository.
 
----
+The SUNDIALS *library* is the one thing that could not come from here: only
+the examples were copied in, so `src/` and `include/` are absent and the
+library was built from the upstream 7.8.0 release tree. That is recorded in
+`c-results/provenance/01-configure-cmd.txt` and `03-CMakeCache.txt`.
+`differences/provenance/21-source-of-each-artefact.txt` states the split.
+
+> An earlier revision of this document described a check that compared this
+> repository's `examples/` against the upstream tree and reported "370
+> identical". That check was circular — the C was being compiled from the
+> upstream tree, so confirming a copy matches its original established
+> nothing about the build. It has been removed and replaced by the check
+> above.
 
 ## Check 3 — what the compiler was actually told to do
 
 This is the part that was missing in the first version of these documents, and
 it is the part that matters most.
 
-**The C.** Open `c-results/provenance/04-compile_commands.json`. It is produced
-by CMake and contains one entry per source file, each with the *literal*
-`cl.exe` command line. For example, `cvRoberts_dns.c` was compiled with:
+**The C — the examples.** `c-results/provenance/30-build-each-example.json`
+has one entry per example source: the literal `cl.exe` command line, the exit
+code, and the compiler's full output. This is the record that matters, because
+it covers all 180 files including the ones that failed. Pull any file's line
+out yourself:
 
 ```
-cl.exe /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS
-  -I<sundials>\include -I<build>\include
-  -I<sundials>\src\sundials -I<build>\src\sundials
-  /DWIN32 /D_WINDOWS /O2 /Ob2 /DNDEBUG -MD
-  /Fo...\cvRoberts_dns.c.obj /Fd...\ /FS
-  -c <sundials>\examples\cvode\serial\cvRoberts_dns.c
+python -c "import json;d=json.load(open('c-results/provenance/30-build-each-example.json'));print(next(r['command'] for r in d if r['name']=='cvRoberts_dns'))"
 ```
 
-To pull any file's line out yourself:
+The flags every example was compiled with:
 
 ```
-python -c "import json;d=json.load(open('c-results/provenance/04-compile_commands.json'));print(next(e['command'] for e in d if e['file'].endswith('cvRoberts_dns.c')))"
+/nologo /O2 /Ob2 /DNDEBUG /MD /DWIN32 /D_WINDOWS
+/DSUNDIALS_STATIC_DEFINE /D_CRT_SECURE_NO_WARNINGS
+/I<example's own dir> /I<sundials>\include /I<build>\include
+/link /LIBPATH:<build>\bin <one solver lib> <support libs>
 ```
+
+with `/openmp` added for the `C_openmp` and `C_openmpdev` directories.
+`31-build-each-example.txt` is the same record in readable form — command,
+then verbatim compiler output — for every one of the 180 files.
+
+**The C — the library.** `c-results/provenance/04-compile_commands.json` is
+CMake's record for the 235 library translation units, in the same format.
 
 `c-results/provenance/06-build-out.txt` is the build log with Ninja in verbose
 mode, so it also contains every **link** command as executed, not just the
@@ -216,11 +227,20 @@ The first script deletes and recreates `logs\c-build`, then rewrites every file
 in `c-results\provenance\`. Compare your regenerated
 `04-compile_commands.json` against the committed one to confirm the flags match.
 
-Expected: the configure and build both succeed, and `logs\c-build\bin` holds
-109 `.exe` files (108 in-scope serial examples plus one manyvector example that
-builds without MPI). The 20 KLU/SuperLU examples are absent because those
-libraries are not installed — that is intentional and symmetric with the Rust
-side.
+Then compile every example individually and record each command:
+
+```
+python tools\build_all_c_examples.py
+tools\build_c_lapack_substituted.cmd
+```
+
+Expected: **114 of 180** C files build, and `logs\c-build\bin`
+holds 118 `.exe` files (114 plus the four `*L` built by the second
+script). The 66 that do not build each have the compiler's own
+error recorded in `c-results/provenance/31-build-each-example.txt`; grouped by
+cause they are 34 missing `mpi.h`, 12 missing `klu.h`, 10 missing
+`slu_mt_ddefs.h`, 4 rejected `#pragma omp target`, 4 LAPACK, 2 missing
+`HYPRE.h`.
 
 ---
 
@@ -244,7 +264,25 @@ report all three.
 Stated here so you know what you are checking. The reasoning is in
 [`differences/ANALYSIS.md`](differences/ANALYSIS.md).
 
-Over the 179 (example, argv) pairs both sides run:
+**Coverage.** All 180 C example files in `examples/` were compiled
+individually; 114 built. All 258 `(example, argv)` variants
+declared by the `CMakeLists.txt` of all 29 example directories were run on
+both sides.
+
+| | variants |
+|---|---:|
+| ran on **both** sides — the comparable set | **179** |
+| ran on the C side only — no Rust counterpart exists | **10** |
+| excluded on both sides (KLU / SuperLU_MT not installed) | 20 |
+| neither side could run (MPI / PETSc / hypre / OpenMP-offload absent) | 49 |
+
+The 10 C-only variants are the 9 `C_openmp` examples and
+`ark_brusselator1D_manyvec`. They are **not ported**: the Rust port has no
+`nvector_openmp` and no `nvector_manyvector`. That is a real gap, not an
+exclusion, and it is listed example by example in
+[`rust-results/EXCLUSIONS.md`](rust-results/EXCLUSIONS.md).
+
+**Comparison**, over the 179 variants both sides ran:
 
 | | count |
 |---|---:|
@@ -255,26 +293,32 @@ Over the 179 (example, argv) pairs both sides run:
 | …of those, neither matches (the reference file is stale) | 7 |
 
 Against the reference outputs shipped with SUNDIALS 7.8.0, the Rust port is
-byte-identical on **153** of 179 and the MSVC C build on **112**.
+byte-identical on **153** and the MSVC C build on
+**112**.
 
 The reason is recorded and measurable: the reference files were generated on a
 Linux/glibc machine, and glibc's and Microsoft's maths libraries do not round
 identically. A C program built here uses Microsoft's. The Rust port uses
 neither — it carries its own implementations of `sin`, `cos`, `exp`, `log` and
 the rest, checked bit-for-bit against glibc over 8,000,000 inputs per function
-(`current_status.md` §2). So on this platform the Rust reproduces the published
-results and a native C build cannot.
-
----
+(`current_status.md` §2). So on this platform the Rust reproduces the
+published results and a native C build cannot.
 
 ## Known limits of this evidence
 
-* The 20 KLU/SuperLU examples were not built or run on either side, because
-  those libraries are not installed. They are excluded symmetrically and
-  listed in `c-results/EXCLUSIONS.md`.
-* The MPI, OpenMP, GPU, PETSc, hypre, C++ and Fortran example directories are
-  not covered at all, for the same reason. They are listed with their required
-  backend in the same file.
+* 62 of the 180 C examples cannot be built on this machine: MS-MPI, PETSc,
+  hypre, KLU, SuperLU_MT and LAPACK are not installed, and MSVC does not
+  implement OpenMP device offload. Each one's compiler error is recorded in
+  `c-results/provenance/31-build-each-example.txt` — these are measured
+  failures, not assumptions.
+* 10 examples build and run on the C side but have **no Rust counterpart**,
+  because the port has no `nvector_openmp` or `nvector_manyvector`. Those two
+  vector implementations, and then the 10 example translations, are what
+  "port every example" still requires.
+* The C++ (46), Fortran (51) and CUDA (7) sources are not covered: they are
+  not C. Note that a CUDA toolkit (v13.0) *is* installed on this machine — an
+  earlier revision of these documents wrongly claimed it was not — but the
+  Rust port has no GPU backend, so there would be nothing to compare against.
 * Comparisons strip carriage returns from both sides before comparing, because
   the MSVC C build writes CRLF line endings and the Rust port writes LF. That
   is a platform convention, not a numerical result — but it means "identical"
