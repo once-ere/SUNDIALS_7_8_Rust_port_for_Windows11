@@ -48,6 +48,7 @@ pub mod sundials_iterative;
 pub mod sundials_linearsolver;
 pub mod sundials_logger;
 pub mod nvector_manyvector;
+pub mod nvector_openmp;
 pub mod nvector_serial;
 pub mod sunadaptcontroller_imexgus;
 pub mod sunadaptcontroller_mrihtol;

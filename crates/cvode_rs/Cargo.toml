@@ -11,6 +11,10 @@ name = "cvAdvDiff_bnd"
 path = "examples/cvAdvDiff_bnd.rs"
 
 [[example]]
+name = "cvAdvDiff_bnd_omp"
+path = "examples/cvAdvDiff_bnd_omp.rs"
+
+[[example]]
 name = "cvAdvDiff_bndL"
 path = "examples/cvAdvDiff_bndL.rs"
 

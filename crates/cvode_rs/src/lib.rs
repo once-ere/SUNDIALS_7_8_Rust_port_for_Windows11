@@ -27,6 +27,7 @@ pub mod cvode_proj;
 pub mod cvode_resize;
 
 /* Re-export every shared module from sundials_core (workspace rule) */
+pub use sundials_core::nvector_openmp;
 pub use sundials_core::nvector_serial;
 pub use sundials_core::sunadaptcontroller_imexgus;
 pub use sundials_core::sunadaptcontroller_mrihtol;
