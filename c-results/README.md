@@ -25,21 +25,58 @@ Build script: [`tools/build_c_examples.cmd`](../tools/build_c_examples.cmd)
 for every variant is in [`outputs/`](outputs/), one file per variant, named
 exactly like the reference file it corresponds to.
 
-## Configuration
+## Configuration — the literal command line
 
-Everything requiring a third-party library is off, because none is installed
-here and none is in scope for the Rust port either:
+This is the exact invocation, not a summary of it. It is also written to
+`provenance/01-configure-cmd.txt` by the build script.
 
 ```
--DCMAKE_BUILD_TYPE=Release  -DBUILD_SHARED_LIBS=OFF  -DBUILD_STATIC_LIBS=ON
--DEXAMPLES_ENABLE_C=ON      -DSUNDIALS_INDEX_SIZE=64 -DSUNDIALS_PRECISION=double
--DENABLE_{LAPACK,KLU,SUPERLUMT,SUPERLUDIST,MPI,OPENMP,PTHREAD,HYPRE,PETSC,
-          TRILINOS,CUDA,HIP,SYCL,RAJA,KOKKOS,GINKGO,XBRAID,CALIPER,ADIAK}=OFF
--DBUILD_FORTRAN_MODULE_INTERFACE=OFF
+cmake -G Ninja -S <sundials-7.8.0> -B logs/c-build ^
+  -DCMAKE_BUILD_TYPE=Release ^
+  -DCMAKE_C_COMPILER=cl ^
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ^
+  -DBUILD_SHARED_LIBS=OFF ^
+  -DBUILD_STATIC_LIBS=ON ^
+  -DEXAMPLES_ENABLE_C=ON ^
+  -DEXAMPLES_ENABLE_CXX=OFF ^
+  -DEXAMPLES_INSTALL=OFF ^
+  -DBUILD_TESTING=OFF ^
+  -DSUNDIALS_INDEX_SIZE=64 ^
+  -DSUNDIALS_PRECISION=double ^
+  -DENABLE_LAPACK=OFF -DENABLE_KLU=OFF -DENABLE_SUPERLUMT=OFF ^
+  -DENABLE_SUPERLUDIST=OFF -DENABLE_MPI=OFF -DENABLE_OPENMP=OFF ^
+  -DENABLE_PTHREAD=OFF -DENABLE_HYPRE=OFF -DENABLE_PETSC=OFF ^
+  -DENABLE_TRILINOS=OFF -DENABLE_CUDA=OFF -DENABLE_HIP=OFF ^
+  -DENABLE_SYCL=OFF -DENABLE_RAJA=OFF -DENABLE_KOKKOS=OFF ^
+  -DENABLE_GINKGO=OFF -DENABLE_XBRAID=OFF -DENABLE_CALIPER=OFF ^
+  -DENABLE_ADIAK=OFF -DBUILD_FORTRAN_MODULE_INTERFACE=OFF
+
+cmake --build logs/c-build --parallel -- -v
 ```
 
-Generator: Ninja, driven from the `vcvars64` environment of Visual Studio 18
-Professional. The build produced **363 targets with 0 errors**.
+run from the environment established by
+
+```
+"C:\Program Files\Microsoft Visual Studio8\Professional\VC\Auxiliary\Buildcvars64.bat"
+```
+
+> ### Provenance status — incomplete, being regenerated
+>
+> An earlier revision of this file showed the option list in an abbreviated
+> brace form that was **not a runnable command line**, and the build was run
+> with Ninja in quiet mode, so the per-translation-unit `cl.exe` command lines
+> were never recorded. `CMakeCache.txt`, `compile_commands.json` and the build
+> log were gitignored, so the counts quoted below had no committed artifact
+> behind them.
+>
+> `tools/build_c_examples.cmd` has been rewritten to capture all of it into
+> [`provenance/`](provenance/) — environment and tool paths/versions, the
+> literal configure and build command lines, the full configure output, the
+> resolved `CMakeCache.txt`, `compile_commands.json` (the exact `cl.exe`
+> line for every translation unit), the verbose `ninja -v` build log, and
+> SHA-256 for every binary produced. **That capture has not completed yet**,
+> so `provenance/` is not populated in this commit. Treat the numbers below
+> as measured-but-not-yet-auditable until it is.
 
 ## Results
 
