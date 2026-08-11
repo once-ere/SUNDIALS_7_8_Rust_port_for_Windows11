@@ -9,3 +9,12 @@
 *.rs text eol=lf
 *.md text eol=lf
 *.toml text eol=lf
+
+# Captured example outputs are evidence: store the exact bytes, including
+# line endings. The MSVC C build emits CRLF (Windows stdio text mode), the
+# Rust port and the upstream references emit LF. Normalising either side
+# would destroy the artefact and hide the difference.
+c-results/outputs/**    -text
+rust-results/outputs/** -text
+differences/diffs/**    -text
+examples/**             -text

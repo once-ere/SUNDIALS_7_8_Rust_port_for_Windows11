@@ -269,13 +269,26 @@ Two things are deliberately **not** claimed:
 
 ## 7. Open items (not blocking)
 
-1. **Pristine C build on Windows.** Building upstream SUNDIALS 7.8.0 here with
-   cmake + MSVC/clang-cl and comparing Rust vs that C vs the shipped `.out`
-   for all 26 divergences would upgrade "0 port defects identified" to
-   "proven natively", as the Linux sibling did with
-   `tools/pristine_c_build.sh` + `tools/compare_pristine_c.sh`. The claim is
-   already strong by inheritance — the divergent set is now identical to the
-   one proven there, from the same Rust source — but it is inherited.
+1. ~~**Pristine C build on Windows.**~~ **Done** — see
+   [`differences/`](differences/). Upstream SUNDIALS 7.8.0 was built here with
+   cmake + MSVC (Visual Studio 18 Professional, `cl` 19.51.36246, 363 targets,
+   0 errors) and all 179 comparable variants were run three ways: Rust, that C
+   build, and the shipped reference.
+
+   The result is **not** the Linux port's "Rust == pristine C", and it cannot
+   be: the two binaries link different C libraries by construction — the Rust
+   reproduces glibc's libm, an MSVC binary links the UCRT's. What it does
+   establish is the thing that matters for a defect hunt: over 179 variants
+   there is **no case where the native C reproduces the upstream reference and
+   the Rust does not** (0 of 48 disagreements), while there are 41 where the
+   Rust does and the C does not. The Rust is byte-identical to the references
+   on 153 variants against the C build's 112, and the only solver error
+   produced by either side is on the C side (`cvsDiurnal_FSA_kry -sensi sim t`
+   exhausts `mxstep` under the UCRT's `exp`; the Rust reproduces the reference
+   exactly). Both sides re-ran bit-for-bit identically.
+
+   A same-libm comparison — building the C against a glibc-equivalent libm —
+   would still be a distinct and stronger experiment, and is not done.
 2. **Bare-metal glibc oracle.** Every oracle came from a WSL2 guest. That is a
    real glibc/x86-64 userspace and the arithmetic cannot differ, but an oracle
    from a physical Linux box would remove the last question.

@@ -179,11 +179,36 @@ inside one tree.
 | [`…_for_Linux`](https://github.com/once-ere/SUNDIALS_7_8_Rust_port_for_Linux) | Linux / x86-64 / glibc 2.36–2.41 | 153 / 26 / 20 |
 | **this one** | Windows 11 / x86-64, host libm replaced | **153 / 26 / 20** |
 
+## Head-to-head against the C, built here with MSVC
+
+The upstream C examples were built on this machine with **Visual Studio 18
+Professional** and run beside the Rust port over the same 179 comparable
+variants. Full write-up in [`differences/`](differences/):
+
+| | variants |
+|---|---:|
+| C and Rust byte-identical | **131** |
+| C and Rust differ | **48** |
+| — Rust matches the shipped reference, C does not | **41** |
+| — C matches the shipped reference, Rust does not | **0** |
+| — neither matches (stale references) | 7 |
+| outputs containing a solver error — Rust | **0** |
+| outputs containing a solver error — C | **1** (`cvsDiurnal_FSA_kry -sensi sim t` exhausts `mxstep`) |
+
+Against the references shipped with SUNDIALS 7.8.0, the Rust port is
+byte-identical on **153** of 179 and the MSVC C build on **112** — because
+the references were generated on glibc, and this port reproduces glibc's libm
+while a C binary built here links the Microsoft UCRT's. Re-running both sides
+from scratch reproduced all 358 outputs bit for bit.
+
 ## Documentation
 
 | file | contents |
 |---|---|
 | [`current_status.md`](current_status.md) | **start here** — measured state, deficiencies, what remains |
+| [`c-results/`](c-results/) | the C built with Visual Studio 18 Professional: build configuration, per-variant results, raw outputs |
+| [`rust-results/`](rust-results/) | the Rust port under `cargo`: per-variant results, raw outputs |
+| [`differences/`](differences/) | the two side by side, each against the shipped references, with root causes |
 | [`sundials.md`](sundials.md) | public guide — crate map, worked example, C-to-Rust API conventions |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | handle model, locked porting patterns, numbered deviation classes |
 | [`VERIFICATION.md`](VERIFICATION.md) | per-variant matrix: Windows results, then the inherited Linux and macOS evidence |

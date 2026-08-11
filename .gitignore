@@ -12,3 +12,8 @@
 # LGPL upstream C sources fetched by tools/fetch_libm_sources.sh; not
 # committed (see NOTICE).
 /reference
+
+# MSVC build tree for the C examples (tools/build_c_examples.cmd).
+/logs/c-build
+/logs/run
+/logs/example_matrix_state.json
