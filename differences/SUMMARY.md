@@ -1,6 +1,6 @@
 # differences — summary
 
-Generated 2026-08-11T00:42:40Z from commit `f0d1c3d`.
+Generated 2026-08-11T01:07:34Z from commit `d3aa173`.
 
 ## C vs Rust, by class
 

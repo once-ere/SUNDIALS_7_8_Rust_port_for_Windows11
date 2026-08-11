@@ -4,8 +4,8 @@
 
 | item | value |
 |---|---|
-| generated | `2026-08-11T00:42:40Z` |
-| repository commit | `f0d1c3d` |
+| generated | `2026-08-11T01:07:34Z` |
+| repository commit | `d3aa173` |
 | operating system | Microsoft Windows 11 Pro for Workstations 10.0.26200.0 |
 | CPU | Intel(R) Core(TM) Ultra 9 275HX |
 | C compiler | Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36246 for x64 |
@@ -37,24 +37,6 @@ Each program runs in its own scratch directory, because several write
 
 Step 4 is what makes this a three-way comparison rather than a two-way one,
 and it is the only way to say which side is *right* when they disagree.
-
-## One difference that is present on every single line
-
-The MSVC C build writes **CRLF**; the Rust port and the reference `.out` files
-shipped with SUNDIALS both write **LF**. That is Windows stdio text-mode
-translation in the C runtime, which Rust does not do.
-
-Taken literally it means the C build differs from every reference on every
-line of every file, and from the Rust port likewise. Line-ending convention is
-not a numerical result, so all comparisons here strip `\r` from both sides
-before comparing — but it is stated rather than silently normalised, because
-it is a genuine and total difference in the artefacts, and because the
-captured outputs in `outputs/` are committed with their exact bytes
-(`.gitattributes` marks them `-text`) so anyone can check.
-
-Where a comparison below says "byte-identical", it means byte-identical after
-that single normalisation, applied symmetrically.
-
 
 ## Headline
 

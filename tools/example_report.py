@@ -125,6 +125,58 @@ Ginkgo, Trilinos, SuperLU_DIST, ManyVector, XBraid, and the C++ and Fortran
 """
 
 
+
+def quote(relpath, first=None, fence="text"):
+    """Embed a provenance artefact verbatim. The documents must never restate
+    a command line from memory; they quote the recorded file, so what is
+    published is what was executed."""
+    f = ROOT / relpath
+    if not f.exists():
+        return f"_(missing: `{relpath}` — run the build script to regenerate)_"
+    lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
+    if first:
+        lines = lines[:first]
+    body = "\n".join(l.rstrip() for l in lines).strip("\n")
+    return f"```{fence}\n{body}\n```"
+
+
+def rustc_line(name):
+    """Pull one literal rustc invocation out of the cargo -v log."""
+    f = ROOT / "rust-results/provenance/02-build-out.txt"
+    if not f.exists():
+        return "_(missing: rust-results/provenance/02-build-out.txt)_"
+    for l in f.read_text(encoding="utf-8", errors="replace").splitlines():
+        if f"--crate-name {name} " in l:
+            cmd = l.strip()
+            if cmd.startswith("Running `"):
+                cmd = cmd[len("Running `"):].rstrip("`")
+            return "```text\n" + cmd.replace(" -C ", "\n  -C ").replace(" --", "\n  --") + "\n```"
+    return f"_(no rustc invocation found for {name})_"
+
+
+def cl_line(suffix):
+    """Pull one literal cl.exe invocation out of compile_commands.json."""
+    import json as _json
+    f = ROOT / "c-results/provenance/04-compile_commands.json"
+    if not f.exists():
+        return "_(missing: c-results/provenance/04-compile_commands.json)_"
+    for e in _json.loads(f.read_text(encoding="utf-8")):
+        if e["file"].endswith(suffix):
+            return "```text\n" + e["command"].replace(" -I", "\n  -I").replace(" /D", "\n  /D").replace(" -c ", "\n  -c ") + "\n```"
+    return f"_(no compile command found for {suffix})_"
+
+
+def n_units():
+    import json as _json
+    f = ROOT / "c-results/provenance/04-compile_commands.json"
+    return len(_json.loads(f.read_text(encoding="utf-8"))) if f.exists() else 0
+
+
+def count_lines(relpath):
+    f = ROOT / relpath
+    return len(f.read_text(encoding="utf-8", errors="replace").splitlines()) if f.exists() else 0
+
+
 def md_table(rows, cols):
     out = ["| " + " | ".join(c[0] for c in cols) + " |",
            "|" + "|".join("---" for _ in cols) + "|"]
@@ -158,21 +210,46 @@ Build script: [`tools/build_c_examples.cmd`](../tools/build_c_examples.cmd)
 for every variant is in [`outputs/`](outputs/), one file per variant, named
 exactly like the reference file it corresponds to.
 
-## Configuration
+## Provenance — the recorded chain from source to result
 
-Everything requiring a third-party library is off, because none is installed
-here and none is in scope for the Rust port either:
+Every command line below is **quoted from the file that recorded it**, not
+restated. [`../VERIFY.md`](../VERIFY.md) is a step-by-step guide to checking
+all of it yourself.
 
-```
--DCMAKE_BUILD_TYPE=Release  -DBUILD_SHARED_LIBS=OFF  -DBUILD_STATIC_LIBS=ON
--DEXAMPLES_ENABLE_C=ON      -DSUNDIALS_INDEX_SIZE=64 -DSUNDIALS_PRECISION=double
--DENABLE_{{LAPACK,KLU,SUPERLUMT,SUPERLUDIST,MPI,OPENMP,PTHREAD,HYPRE,PETSC,
-          TRILINOS,CUDA,HIP,SYCL,RAJA,KOKKOS,GINKGO,XBRAID,CALIPER,ADIAK}}=OFF
--DBUILD_FORTRAN_MODULE_INTERFACE=OFF
-```
+| file | what it lets you check |
+|---|---|
+| [`provenance/00-environment.txt`](provenance/00-environment.txt) | host, UTC start/finish, full path and version banner of `cl.exe`, `link.exe`, `cmake`, `ninja`; the MSVC toolset and Windows SDK/UCRT chosen by `vcvars64.bat`; the complete `INCLUDE` and `LIB` paths |
+| [`provenance/01-configure-cmd.txt`](provenance/01-configure-cmd.txt) | the literal `cmake` configure command line |
+| [`provenance/02-configure-out.txt`](provenance/02-configure-out.txt) | everything CMake printed |
+| [`provenance/03-CMakeCache.txt`](provenance/03-CMakeCache.txt) | every option CMake resolved, including defaults |
+| [`provenance/04-compile_commands.json`](provenance/04-compile_commands.json) | **the exact `cl.exe` line for each of the {n_units()} translation units** |
+| [`provenance/05-build-cmd.txt`](provenance/05-build-cmd.txt) | the literal build command line |
+| [`provenance/06-build-out.txt`](provenance/06-build-out.txt) | `ninja -v`: every compile *and link* as executed ({count_lines('c-results/provenance/06-build-out.txt')} lines) |
+| [`provenance/10-lapacksub-cmd.txt`](provenance/10-lapacksub-cmd.txt) | for each `*L` example, every line that differs from upstream, and the `cl.exe` line used |
+| [`provenance/11-lapacksub-out.txt`](provenance/11-lapacksub-out.txt) | compiler/linker output for those four |
+| [`provenance/20-input-sources.sha256`](provenance/20-input-sources.sha256) | SHA-256 of every C source compiled |
+| [`provenance/21-binaries.sha256`](provenance/21-binaries.sha256) | SHA-256 of every binary produced |
+| [`provenance/22-outputs.sha256`](provenance/22-outputs.sha256) | SHA-256 of every captured output |
 
-Generator: Ninja, driven from the `vcvars64` environment of Visual Studio 18
-Professional. The build produced **363 targets with 0 errors**.
+### The configure command, verbatim
+
+{quote('c-results/provenance/01-configure-cmd.txt')}
+
+run from the environment established by
+`"C:\\Program Files\\Microsoft Visual Studio\\18\\Professional\\VC\\Auxiliary\\Build\\vcvars64.bat"`,
+then built with
+
+{quote('c-results/provenance/05-build-cmd.txt')}
+
+### What the compiler was actually told, for one file
+
+`cvRoberts_dns.c`, quoted from `04-compile_commands.json` (line breaks added
+for reading; the recorded command is one line):
+
+{cl_line('cvRoberts_dns.c')}
+
+So: `/O2 /Ob2` optimisation, `/DNDEBUG`, `-MD` (dynamic UCRT), 64-bit indices
+and double precision as configured. Nothing is inferred here — read the JSON.
 
 ## Results
 {SCOPE}
@@ -216,6 +293,8 @@ is recorded per variant in [`RESULTS.md`](RESULTS.md).
 | [`RESULTS.md`](RESULTS.md) | every variant: exit status, output size, agreement with the shipped reference |
 | [`EXCLUSIONS.md`](EXCLUSIONS.md) | every example not built, with the reason |
 | [`outputs/`](outputs/) | raw captured stdout+stderr, one file per variant |
+| [`provenance/`](provenance/) | build environment, literal command lines, compiler invocations, checksums |
+| [`../VERIFY.md`](../VERIFY.md) | how to check every claim here yourself |
 """)
 
 cols_side = [
@@ -250,9 +329,34 @@ session, over the same 199 variants.
 
 ## Provenance
 {PROV_BLOCK}
-Built with `cargo build --release --workspace --examples`; run by
-[`tools/example_matrix.py`](../tools/example_matrix.py). Raw captured output
-per variant is in [`outputs/`](outputs/).
+| file | what it lets you check |
+|---|---|
+| [`provenance/00-environment.txt`](provenance/00-environment.txt) | host, UTC start/finish, `rustc -vV` and `cargo -V` with full paths, release profile, warning/error counts |
+| [`provenance/01-build-cmd.txt`](provenance/01-build-cmd.txt) | the literal cargo command lines |
+| [`provenance/02-build-out.txt`](provenance/02-build-out.txt) | `cargo build -v`: **every `rustc` invocation as executed** ({count_lines('rust-results/provenance/02-build-out.txt')} lines) |
+| [`provenance/03-cargo-config.txt`](provenance/03-cargo-config.txt) | `.cargo/config.toml` verbatim — the source of `-C target-feature=+fma` |
+| [`provenance/04-Cargo.lock.txt`](provenance/04-Cargo.lock.txt) | the resolved dependency set: 7 workspace crates, nothing external |
+| [`provenance/20-input-sources.sha256`](provenance/20-input-sources.sha256) | SHA-256 of every example source compiled |
+| [`provenance/21-binaries.sha256`](provenance/21-binaries.sha256) | SHA-256 of every binary produced |
+| [`provenance/22-outputs.sha256`](provenance/22-outputs.sha256) | SHA-256 of every captured output |
+
+### The build command, verbatim
+
+{quote('rust-results/provenance/01-build-cmd.txt')}
+
+### What rustc was actually told, for the core library
+
+Quoted from `02-build-out.txt` (line breaks added for reading):
+
+{rustc_line('sundials_core')}
+
+`-C target-feature=+fma` is not typed on the command line — it comes from
+`.cargo/config.toml`, so it applies to every compilation in this workspace.
+Run the check in [`../VERIFY.md`](../VERIFY.md) §3 to count how many `rustc`
+invocations carried it.
+
+Raw captured output per variant is in [`outputs/`](outputs/); the run harness
+is [`tools/example_matrix.py`](../tools/example_matrix.py).
 
 ## What "ported" means here
 
@@ -297,6 +401,8 @@ Against the reference outputs shipped with SUNDIALS 7.8.0:
 | [`RESULTS.md`](RESULTS.md) | every variant: exit status, output size, agreement with the shipped reference |
 | [`EXCLUSIONS.md`](EXCLUSIONS.md) | every example not ported, with the reason |
 | [`outputs/`](outputs/) | raw captured stdout+stderr, one file per variant |
+| [`provenance/`](provenance/) | build environment, literal command lines, compiler invocations, checksums |
+| [`../VERIFY.md`](../VERIFY.md) | how to check every claim here yourself |
 """)
 
 w("rust-results/RESULTS.md", f"""

@@ -1,26 +1,26 @@
 @echo off
 REM ===========================================================================
-REM build_c_examples.cmd — build SUNDIALS 7.8.0 and its serial C examples with
-REM Microsoft Visual Studio 18 Professional, capturing full provenance.
+REM build_c_examples.cmd
 REM
-REM   tools\build_c_examples.cmd [<sundials-source-dir>]
+REM Builds SUNDIALS 7.8.0 and its serial C examples with Microsoft Visual
+REM Studio 18 Professional, and records everything needed to audit the build.
 REM
-REM Everything this script does is recorded under c-results\provenance\ so the
-REM build can be audited without trusting any summary:
+REM   tools\build_c_examples.cmd [<path-to-sundials-7.8.0>]
 REM
-REM   00-environment.txt      host, toolchain paths and versions, the compiler
-REM                           and linker environment variables vcvars64 sets
-REM   01-configure-cmd.txt    the literal cmake configure command line
-REM   02-configure-out.txt    everything cmake printed while configuring
-REM   03-CMakeCache.txt       every cache variable cmake resolved
-REM   04-compile_commands.json  the exact cl.exe command line for every
-REM                           translation unit, emitted by cmake
-REM   05-build-cmd.txt        the literal cmake --build command line
-REM   06-build-out.txt        ninja -v output: every compile and link command
-REM                           line as actually executed
-REM   07-targets.txt          every binary produced, with size and SHA-256
+REM Writes into c-results\provenance\ :
+REM   00-environment.txt        host, tool paths, tool versions, INCLUDE/LIB
+REM   01-configure-cmd.txt      the literal cmake configure command line
+REM   02-configure-out.txt      everything cmake printed
+REM   03-CMakeCache.txt         every cache variable cmake resolved
+REM   04-compile_commands.json  exact cl.exe line per translation unit
+REM   05-build-cmd.txt          the literal cmake --build command line
+REM   06-build-out.txt          ninja -v: every compile and link as executed
 REM
-REM The upstream C tree is never written to; the build tree is logs\c-build.
+REM The upstream C tree is read-only; the build tree is logs\c-build.
+REM
+REM NOTE ON STYLE: no parenthesised redirect blocks are used below. INCLUDE and
+REM LIB contain "Program Files (x86)", and a ")" inside such a block ends it
+REM early, which silently corrupts the script.
 REM
 REM SPDX-License-Identifier: BSD-3-Clause
 REM ===========================================================================
@@ -32,82 +32,78 @@ if "%SRC%"=="" set "SRC=C:\Users\nsh\Developer\sundials-7.8.0"
 set "HERE=%~dp0.."
 set "BUILD=%HERE%\logs\c-build"
 set "PROV=%HERE%\c-results\provenance"
+set "P=%PROV%\00-environment.txt"
 
 if not exist "%PROV%" mkdir "%PROV%"
 if exist "%BUILD%" rmdir /s /q "%BUILD%"
 mkdir "%BUILD%"
 
-REM --------------------------------------------------------------- environment
-call "%VSROOT%\VC\Auxiliary\Build\vcvars64.bat" >nul || exit /b 1
+call "%VSROOT%\VC\Auxiliary\Build\vcvars64.bat" >nul
+if errorlevel 1 exit /b 1
 
-> "%PROV%\00-environment.txt" (
-  echo == host ==
-  ver
-  echo(
-  echo == date ^(UTC^) ==
-  powershell -NoProfile -Command "(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')"
-  echo(
-  echo == CPU ==
-  powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).Name"
-  echo(
-  echo == Visual Studio ==
-  echo VSROOT = %VSROOT%
-  powershell -NoProfile -Command "Get-Item '%VSROOT%\VC\Auxiliary\Build\vcvars64.bat' ^| Select-Object -ExpandProperty LastWriteTime"
-  echo(
-  echo == cl.exe ==
-  where cl
-  echo(
-  echo == link.exe ==
-  where link
-  echo(
-  echo == cmake ==
-  where cmake
-  cmake --version
-  echo(
-  echo == ninja ==
-  where ninja
-  ninja --version
-  echo(
-  echo == compiler environment set by vcvars64 ==
-  echo VSCMD_ARG_TGT_ARCH = %VSCMD_ARG_TGT_ARCH%
-  echo VCToolsVersion     = %VCToolsVersion%
-  echo WindowsSDKVersion  = %WindowsSDKVersion%
-  echo UCRTVersion        = %UCRTVersion%
-  echo(
-  echo INCLUDE = %INCLUDE%
-  echo(
-  echo LIB = %LIB%
-  echo(
-  echo LIBPATH = %LIBPATH%
-)
-REM cl.exe prints its banner to stderr and needs an input to not error out
-cl 2>>"%PROV%\00-environment.txt" >nul
-link 2>>"%PROV%\00-environment.txt" >nul
+echo == how this file was produced ==> "%P%"
+echo tools\build_c_examples.cmd, after calling>> "%P%"
+echo "%VSROOT%\VC\Auxiliary\Build\vcvars64.bat">> "%P%"
+echo.>> "%P%"
+echo == host ==>> "%P%"
+ver >> "%P%"
+powershell -NoProfile -Command "(Get-CimInstance Win32_OperatingSystem).Caption" >> "%P%"
+powershell -NoProfile -Command "(Get-CimInstance Win32_Processor).Name" >> "%P%"
+echo.>> "%P%"
+echo == build started (UTC) ==>> "%P%"
+powershell -NoProfile -Command "(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')" >> "%P%"
+echo.>> "%P%"
+echo == cl.exe path and banner ==>> "%P%"
+where cl >> "%P%"
+cl 2>> "%P%" >nul
+echo.>> "%P%"
+echo == link.exe path and banner ==>> "%P%"
+where link >> "%P%"
+link 2>> "%P%" >nul
+echo.>> "%P%"
+echo == cmake ==>> "%P%"
+where cmake >> "%P%"
+cmake --version >> "%P%"
+echo.>> "%P%"
+echo == ninja ==>> "%P%"
+where ninja >> "%P%"
+ninja --version >> "%P%"
+echo.>> "%P%"
+echo == toolchain selected by vcvars64 ==>> "%P%"
+echo VSCMD_ARG_TGT_ARCH=%VSCMD_ARG_TGT_ARCH%>> "%P%"
+echo VCToolsVersion=%VCToolsVersion%>> "%P%"
+echo WindowsSDKVersion=%WindowsSDKVersion%>> "%P%"
+echo UCRTVersion=%UCRTVersion%>> "%P%"
+echo.>> "%P%"
+echo == INCLUDE ==>> "%P%"
+echo %INCLUDE%>> "%P%"
+echo.>> "%P%"
+echo == LIB ==>> "%P%"
+echo %LIB%>> "%P%"
+echo.>> "%P%"
+echo == source tree ==>> "%P%"
+echo %SRC%>> "%P%"
 
-REM ---------------------------------------------------------------- configure
-REM The literal command line below is written to 01-configure-cmd.txt verbatim
-REM by echoing the same text that is executed on the following lines.
-> "%PROV%\01-configure-cmd.txt" (
-  echo cmake -G Ninja -S "%SRC%" -B "%BUILD%" ^^
-  echo   -DCMAKE_BUILD_TYPE=Release ^^
-  echo   -DCMAKE_C_COMPILER=cl ^^
-  echo   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ^^
-  echo   -DBUILD_SHARED_LIBS=OFF ^^
-  echo   -DBUILD_STATIC_LIBS=ON ^^
-  echo   -DEXAMPLES_ENABLE_C=ON ^^
-  echo   -DEXAMPLES_ENABLE_CXX=OFF ^^
-  echo   -DEXAMPLES_INSTALL=OFF ^^
-  echo   -DBUILD_TESTING=OFF ^^
-  echo   -DSUNDIALS_INDEX_SIZE=64 ^^
-  echo   -DSUNDIALS_PRECISION=double ^^
-  echo   -DENABLE_LAPACK=OFF -DENABLE_KLU=OFF -DENABLE_SUPERLUMT=OFF ^^
-  echo   -DENABLE_SUPERLUDIST=OFF -DENABLE_MPI=OFF -DENABLE_OPENMP=OFF ^^
-  echo   -DENABLE_PTHREAD=OFF -DENABLE_HYPRE=OFF -DENABLE_PETSC=OFF ^^
-  echo   -DENABLE_TRILINOS=OFF -DENABLE_CUDA=OFF -DENABLE_HIP=OFF ^^
-  echo   -DENABLE_SYCL=OFF -DENABLE_RAJA=OFF -DENABLE_KOKKOS=OFF ^^
-  echo   -DENABLE_GINKGO=OFF -DENABLE_XBRAID=OFF -DENABLE_CALIPER=OFF ^^
-  echo   -DENABLE_ADIAK=OFF -DBUILD_FORTRAN_MODULE_INTERFACE=OFF
-)
+set "C1=%PROV%\01-configure-cmd.txt"
+echo cmake -G Ninja -S "%SRC%" -B "%BUILD%" ^^> "%C1%"
+echo   -DCMAKE_BUILD_TYPE=Release ^^>> "%C1%"
+echo   -DCMAKE_C_COMPILER=cl ^^>> "%C1%"
+echo   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ^^>> "%C1%"
+echo   -DBUILD_SHARED_LIBS=OFF ^^>> "%C1%"
+echo   -DBUILD_STATIC_LIBS=ON ^^>> "%C1%"
+echo   -DEXAMPLES_ENABLE_C=ON ^^>> "%C1%"
+echo   -DEXAMPLES_ENABLE_CXX=OFF ^^>> "%C1%"
+echo   -DEXAMPLES_INSTALL=OFF ^^>> "%C1%"
+echo   -DBUILD_TESTING=OFF ^^>> "%C1%"
+echo   -DSUNDIALS_INDEX_SIZE=64 ^^>> "%C1%"
+echo   -DSUNDIALS_PRECISION=double ^^>> "%C1%"
+echo   -DENABLE_LAPACK=OFF -DENABLE_KLU=OFF -DENABLE_SUPERLUMT=OFF ^^>> "%C1%"
+echo   -DENABLE_SUPERLUDIST=OFF -DENABLE_MPI=OFF -DENABLE_OPENMP=OFF ^^>> "%C1%"
+echo   -DENABLE_PTHREAD=OFF -DENABLE_HYPRE=OFF -DENABLE_PETSC=OFF ^^>> "%C1%"
+echo   -DENABLE_TRILINOS=OFF -DENABLE_CUDA=OFF -DENABLE_HIP=OFF ^^>> "%C1%"
+echo   -DENABLE_SYCL=OFF -DENABLE_RAJA=OFF -DENABLE_KOKKOS=OFF ^^>> "%C1%"
+echo   -DENABLE_GINKGO=OFF -DENABLE_XBRAID=OFF -DENABLE_CALIPER=OFF ^^>> "%C1%"
+echo   -DENABLE_ADIAK=OFF -DBUILD_FORTRAN_MODULE_INTERFACE=OFF>> "%C1%"
 
 cmake -G Ninja -S "%SRC%" -B "%BUILD%" ^
   -DCMAKE_BUILD_TYPE=Release ^
@@ -129,15 +125,29 @@ cmake -G Ninja -S "%SRC%" -B "%BUILD%" ^
   -DENABLE_GINKGO=OFF -DENABLE_XBRAID=OFF -DENABLE_CALIPER=OFF ^
   -DENABLE_ADIAK=OFF -DBUILD_FORTRAN_MODULE_INTERFACE=OFF ^
   > "%PROV%\02-configure-out.txt" 2>&1
-if errorlevel 1 ( type "%PROV%\02-configure-out.txt" & exit /b 1 )
+if errorlevel 1 goto :cfgfail
 
 copy /y "%BUILD%\CMakeCache.txt" "%PROV%\03-CMakeCache.txt" >nul
 copy /y "%BUILD%\compile_commands.json" "%PROV%\04-compile_commands.json" >nul
 
-REM -------------------------------------------------------------------- build
-> "%PROV%\05-build-cmd.txt" echo cmake --build "%BUILD%" --parallel -- -v
+echo cmake --build "%BUILD%" --parallel -- -v > "%PROV%\05-build-cmd.txt"
 cmake --build "%BUILD%" --parallel -- -v > "%PROV%\06-build-out.txt" 2>&1
-if errorlevel 1 ( type "%PROV%\06-build-out.txt" & exit /b 1 )
+if errorlevel 1 goto :bldfail
 
-echo Build complete. Provenance in c-results\provenance\.
+echo.>> "%P%"
+echo == build finished (UTC) ==>> "%P%"
+powershell -NoProfile -Command "(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')" >> "%P%"
+echo OK - provenance in c-results\provenance\
 endlocal
+exit /b 0
+
+:cfgfail
+echo CONFIGURE FAILED - see c-results\provenance\02-configure-out.txt
+type "%PROV%\02-configure-out.txt"
+endlocal
+exit /b 1
+
+:bldfail
+echo BUILD FAILED - see c-results\provenance\06-build-out.txt
+endlocal
+exit /b 1

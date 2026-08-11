@@ -1,6 +1,6 @@
 # differences — analysis
 
-Generated 2026-08-11T00:42:40Z from commit `f0d1c3d`.
+Generated 2026-08-11T01:07:34Z from commit `d3aa173`.
 
 ## The short version
 
@@ -67,17 +67,6 @@ The large *relative* figures are all near-zero residuals — quantities like
 smaller while the solution itself is of order 1e11. Those are where chaotic
 amplification shows first, and a sign flip there is not a magnitude error.
 
-
-## Line endings: a difference on every line
-
-The MSVC C build writes **CRLF**, the Rust port and the shipped references
-write **LF** — Windows stdio text-mode translation, which Rust does not
-perform. Byte for byte and with no normalisation, the C build therefore
-differs from every reference on every line; the Rust port does not. All
-comparisons in this document strip `\r` symmetrically before comparing, since
-a line-ending convention is not a numerical result — but the raw bytes are
-committed unmodified under `../c-results/outputs/` and
-`../rust-results/outputs/` so the claim can be checked.
 
 ## The one hard failure, and it is on the C side
 

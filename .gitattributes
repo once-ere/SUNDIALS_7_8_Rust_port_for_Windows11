@@ -18,3 +18,9 @@ c-results/outputs/**    -text
 rust-results/outputs/** -text
 differences/diffs/**    -text
 examples/**             -text
+
+# Build-provenance artefacts are evidence produced by cmd.exe (CRLF) and by
+# cmake/cargo. Store the exact bytes; normalising them would alter the record.
+c-results/provenance/**    -text
+rust-results/provenance/** -text
+differences/provenance/**  -text

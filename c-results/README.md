@@ -8,8 +8,8 @@ written to.
 
 | item | value |
 |---|---|
-| generated | `2026-08-11T00:42:40Z` |
-| repository commit | `f0d1c3d` |
+| generated | `2026-08-11T01:07:34Z` |
+| repository commit | `d3aa173` |
 | operating system | Microsoft Windows 11 Pro for Workstations 10.0.26200.0 |
 | CPU | Intel(R) Core(TM) Ultra 9 275HX |
 | C compiler | Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36246 for x64 |
@@ -25,13 +25,31 @@ Build script: [`tools/build_c_examples.cmd`](../tools/build_c_examples.cmd)
 for every variant is in [`outputs/`](outputs/), one file per variant, named
 exactly like the reference file it corresponds to.
 
-## Configuration — the literal command line
+## Provenance — the recorded chain from source to result
 
-This is the exact invocation, not a summary of it. It is also written to
-`provenance/01-configure-cmd.txt` by the build script.
+Every command line below is **quoted from the file that recorded it**, not
+restated. [`../VERIFY.md`](../VERIFY.md) is a step-by-step guide to checking
+all of it yourself.
 
-```
-cmake -G Ninja -S <sundials-7.8.0> -B logs/c-build ^
+| file | what it lets you check |
+|---|---|
+| [`provenance/00-environment.txt`](provenance/00-environment.txt) | host, UTC start/finish, full path and version banner of `cl.exe`, `link.exe`, `cmake`, `ninja`; the MSVC toolset and Windows SDK/UCRT chosen by `vcvars64.bat`; the complete `INCLUDE` and `LIB` paths |
+| [`provenance/01-configure-cmd.txt`](provenance/01-configure-cmd.txt) | the literal `cmake` configure command line |
+| [`provenance/02-configure-out.txt`](provenance/02-configure-out.txt) | everything CMake printed |
+| [`provenance/03-CMakeCache.txt`](provenance/03-CMakeCache.txt) | every option CMake resolved, including defaults |
+| [`provenance/04-compile_commands.json`](provenance/04-compile_commands.json) | **the exact `cl.exe` line for each of the 235 translation units** |
+| [`provenance/05-build-cmd.txt`](provenance/05-build-cmd.txt) | the literal build command line |
+| [`provenance/06-build-out.txt`](provenance/06-build-out.txt) | `ninja -v`: every compile *and link* as executed (363 lines) |
+| [`provenance/10-lapacksub-cmd.txt`](provenance/10-lapacksub-cmd.txt) | for each `*L` example, every line that differs from upstream, and the `cl.exe` line used |
+| [`provenance/11-lapacksub-out.txt`](provenance/11-lapacksub-out.txt) | compiler/linker output for those four |
+| [`provenance/20-input-sources.sha256`](provenance/20-input-sources.sha256) | SHA-256 of every C source compiled |
+| [`provenance/21-binaries.sha256`](provenance/21-binaries.sha256) | SHA-256 of every binary produced |
+| [`provenance/22-outputs.sha256`](provenance/22-outputs.sha256) | SHA-256 of every captured output |
+
+### The configure command, verbatim
+
+```text
+cmake -G Ninja -S "C:\Users\nsh\Developer\sundials-7.8.0" -B "C:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\tools\..\logs\c-build" ^
   -DCMAKE_BUILD_TYPE=Release ^
   -DCMAKE_C_COMPILER=cl ^
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON ^
@@ -50,33 +68,35 @@ cmake -G Ninja -S <sundials-7.8.0> -B logs/c-build ^
   -DENABLE_SYCL=OFF -DENABLE_RAJA=OFF -DENABLE_KOKKOS=OFF ^
   -DENABLE_GINKGO=OFF -DENABLE_XBRAID=OFF -DENABLE_CALIPER=OFF ^
   -DENABLE_ADIAK=OFF -DBUILD_FORTRAN_MODULE_INTERFACE=OFF
-
-cmake --build logs/c-build --parallel -- -v
 ```
 
 run from the environment established by
+`"C:\Program Files\Microsoft Visual Studio\18\Professional\VC\Auxiliary\Build\vcvars64.bat"`,
+then built with
 
-```
-"C:\Program Files\Microsoft Visual Studio8\Professional\VC\Auxiliary\Buildcvars64.bat"
+```text
+cmake --build "C:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\tools\..\logs\c-build" --parallel -- -v
 ```
 
-> ### Provenance status — incomplete, being regenerated
->
-> An earlier revision of this file showed the option list in an abbreviated
-> brace form that was **not a runnable command line**, and the build was run
-> with Ninja in quiet mode, so the per-translation-unit `cl.exe` command lines
-> were never recorded. `CMakeCache.txt`, `compile_commands.json` and the build
-> log were gitignored, so the counts quoted below had no committed artifact
-> behind them.
->
-> `tools/build_c_examples.cmd` has been rewritten to capture all of it into
-> [`provenance/`](provenance/) — environment and tool paths/versions, the
-> literal configure and build command lines, the full configure output, the
-> resolved `CMakeCache.txt`, `compile_commands.json` (the exact `cl.exe`
-> line for every translation unit), the verbose `ninja -v` build log, and
-> SHA-256 for every binary produced. **That capture has not completed yet**,
-> so `provenance/` is not populated in this commit. Treat the numbers below
-> as measured-but-not-yet-auditable until it is.
+### What the compiler was actually told, for one file
+
+`cvRoberts_dns.c`, quoted from `04-compile_commands.json` (line breaks added
+for reading; the recorded command is one line):
+
+```text
+C:\PROGRA~1\MICROS~3\18\PROFES~1\VC\Tools\MSVC\1451~1.362\bin\Hostx64\x64\cl.exe  /nologo -DSUNDIALS_STATIC_DEFINE -D_CRT_SECURE_NO_WARNINGS
+  -IC:\Users\nsh\Developer\sundials-7.8.0\include
+  -IC:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\logs\c-build\include
+  -IC:\Users\nsh\Developer\sundials-7.8.0\src\sundials
+  -IC:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\logs\c-build\src\sundials
+  /DWIN32
+  /D_WINDOWS /O2 /Ob2
+  /DNDEBUG -MD /Foexamples\cvode\serial\CMakeFiles\cvRoberts_dns.dir\cvRoberts_dns.c.obj /Fdexamples\cvode\serial\CMakeFiles\cvRoberts_dns.dir\ /FS
+  -c C:\Users\nsh\Developer\sundials-7.8.0\examples\cvode\serial\cvRoberts_dns.c
+```
+
+So: `/O2 /Ob2` optimisation, `/DNDEBUG`, `-MD` (dynamic UCRT), 64-bit indices
+and double precision as configured. Nothing is inferred here — read the JSON.
 
 ## Results
 
@@ -119,23 +139,6 @@ the Microsoft UCRT, whose `sin`, `cos`, `exp`, `log`, `asin`, `acos`, `atan`,
 That is the dominant reason this column is not 199, and it is a property of
 the *platform*, not of the C code. See [`../differences/ANALYSIS.md`](../differences/ANALYSIS.md).
 
-## Line endings
-
-The MSVC C build writes **CRLF**; the Rust port and the reference `.out` files
-shipped with SUNDIALS both write **LF**. That is Windows stdio text-mode
-translation in the C runtime, which Rust does not do.
-
-Taken literally it means the C build differs from every reference on every
-line of every file, and from the Rust port likewise. Line-ending convention is
-not a numerical result, so all comparisons here strip `\r` from both sides
-before comparing — but it is stated rather than silently normalised, because
-it is a genuine and total difference in the artefacts, and because the
-captured outputs in `outputs/` are committed with their exact bytes
-(`.gitattributes` marks them `-text`) so anyone can check.
-
-Where a comparison below says "byte-identical", it means byte-identical after
-that single normalisation, applied symmetrically.
-
 ## The four `*L` examples
 
 `cvRoberts_dnsL`, `cvAdvDiff_bndL`, `cvsRoberts_dnsL` and `cvsAdvDiff_bndL`
@@ -153,3 +156,5 @@ is recorded per variant in [`RESULTS.md`](RESULTS.md).
 | [`RESULTS.md`](RESULTS.md) | every variant: exit status, output size, agreement with the shipped reference |
 | [`EXCLUSIONS.md`](EXCLUSIONS.md) | every example not built, with the reason |
 | [`outputs/`](outputs/) | raw captured stdout+stderr, one file per variant |
+| [`provenance/`](provenance/) | build environment, literal command lines, compiler invocations, checksums |
+| [`../VERIFY.md`](../VERIFY.md) | how to check every claim here yourself |

@@ -1,6 +1,6 @@
 # c-results — per-variant results
 
-MSVC build, 2026-08-11T00:42:40Z. `same` / `ws-only` / `content` describe this
+MSVC build, 2026-08-11T01:07:34Z. `same` / `ws-only` / `content` describe this
 build's output against the reference `.out` shipped with SUNDIALS 7.8.0,
 after removing timing lines from both sides.
 

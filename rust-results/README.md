@@ -7,8 +7,8 @@ session, over the same 199 variants.
 
 | item | value |
 |---|---|
-| generated | `2026-08-11T00:42:40Z` |
-| repository commit | `f0d1c3d` |
+| generated | `2026-08-11T01:07:34Z` |
+| repository commit | `d3aa173` |
 | operating system | Microsoft Windows 11 Pro for Workstations 10.0.26200.0 |
 | CPU | Intel(R) Core(TM) Ultra 9 275HX |
 | C compiler | Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36246 for x64 |
@@ -16,9 +16,54 @@ session, over the same 199 variants.
 | Rust | rustc 1.91.1 (ed61e7d7e 2025-11-07) / cargo 1.91.1 (ea2d97820 2025-10-10) |
 | upstream sources | SUNDIALS 7.8.0, `examples/` as copied into this repository |
 
-Built with `cargo build --release --workspace --examples`; run by
-[`tools/example_matrix.py`](../tools/example_matrix.py). Raw captured output
-per variant is in [`outputs/`](outputs/).
+| file | what it lets you check |
+|---|---|
+| [`provenance/00-environment.txt`](provenance/00-environment.txt) | host, UTC start/finish, `rustc -vV` and `cargo -V` with full paths, release profile, warning/error counts |
+| [`provenance/01-build-cmd.txt`](provenance/01-build-cmd.txt) | the literal cargo command lines |
+| [`provenance/02-build-out.txt`](provenance/02-build-out.txt) | `cargo build -v`: **every `rustc` invocation as executed** (123 lines) |
+| [`provenance/03-cargo-config.txt`](provenance/03-cargo-config.txt) | `.cargo/config.toml` verbatim — the source of `-C target-feature=+fma` |
+| [`provenance/04-Cargo.lock.txt`](provenance/04-Cargo.lock.txt) | the resolved dependency set: 7 workspace crates, nothing external |
+| [`provenance/20-input-sources.sha256`](provenance/20-input-sources.sha256) | SHA-256 of every example source compiled |
+| [`provenance/21-binaries.sha256`](provenance/21-binaries.sha256) | SHA-256 of every binary produced |
+| [`provenance/22-outputs.sha256`](provenance/22-outputs.sha256) | SHA-256 of every captured output |
+
+### The build command, verbatim
+
+```text
+cargo clean
+cargo build --release --workspace --examples -v
+```
+
+### What rustc was actually told, for the core library
+
+Quoted from `02-build-out.txt` (line breaks added for reading):
+
+```text
+C:\Users\nsh\.rustup\toolchains\stable-x86_64-pc-windows-msvc\bin\rustc.exe
+  --crate-name sundials_core
+  --edition=2021 'crates\sundials_core\src\lib.rs'
+  --error-format=json
+  --json=diagnostic-rendered-ansi,artifacts,future-incompat
+  --crate-type lib
+  --emit=dep-info,metadata,link
+  -C opt-level=3
+  -C embed-bitcode=no
+  --check-cfg 'cfg(docsrs,test)'
+  --check-cfg 'cfg(feature, values())'
+  -C metadata=21b2f8dad5df29c2
+  -C extra-filename=-4c97891d540723de
+  --out-dir 'C:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\target\release\deps'
+  -C strip=debuginfo -L 'dependency=C:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\target\release\deps'
+  -C target-feature=+fma
+```
+
+`-C target-feature=+fma` is not typed on the command line — it comes from
+`.cargo/config.toml`, so it applies to every compilation in this workspace.
+Run the check in [`../VERIFY.md`](../VERIFY.md) §3 to count how many `rustc`
+invocations carried it.
+
+Raw captured output per variant is in [`outputs/`](outputs/); the run harness
+is [`tools/example_matrix.py`](../tools/example_matrix.py).
 
 ## What "ported" means here
 
@@ -79,3 +124,5 @@ Against the reference outputs shipped with SUNDIALS 7.8.0:
 | [`RESULTS.md`](RESULTS.md) | every variant: exit status, output size, agreement with the shipped reference |
 | [`EXCLUSIONS.md`](EXCLUSIONS.md) | every example not ported, with the reason |
 | [`outputs/`](outputs/) | raw captured stdout+stderr, one file per variant |
+| [`provenance/`](provenance/) | build environment, literal command lines, compiler invocations, checksums |
+| [`../VERIFY.md`](../VERIFY.md) | how to check every claim here yourself |

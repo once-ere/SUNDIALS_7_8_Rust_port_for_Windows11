@@ -1,0 +1,18 @@
+Chain of custody for the example sources
+========================================================================
+
+The C build compiled from the upstream tree:
+    C:\Users\nsh\Developer\sundials-7.8.0\examples\
+The repository holds a copy at:
+    C:\Users\nsh\Developer\github\SUNDIALS_7_8_Rust_port_for_Windows11\examples\
+
+If every file below is 'identical', the copy in this repository is
+byte-for-byte the source that was compiled, and a reader can audit the
+build using the repository alone.
+
+
+identical : 370
+different : 0
+missing   : 0
+
+(Only differing or missing files are listed individually above.)
