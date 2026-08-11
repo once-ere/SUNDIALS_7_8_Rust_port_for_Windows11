@@ -478,6 +478,31 @@ symmetrically and no comparison is affected.
     ("reason", lambda r: r["c_state"]),
 ])}
 
+> ### Correction — three of these "absent" backends are installed
+>
+> An earlier revision of this file stated that "MS-MPI, PETSc, hypre, KLU,
+> SuperLU, LAPACK and any Fortran compiler are genuinely absent". That was
+> wrong, and the error was mine: I probed a handful of default install paths
+> and generalised from the misses. Intel oneAPI is installed on this machine
+> and supplies three of them:
+>
+> | claimed absent | actually present |
+> |---|---|
+> | LAPACK | **oneMKL** 2025.3 / 2026.1 / latest — `mkl_lapack.h`, ILP64 libraries |
+> | MPI | **Intel MPI** 2021.17 / 2021.18 — `mpi.h`, `impi.lib`, `mpiexec.exe` |
+> | Fortran compiler | **`ifx`** 2026.1.1 and 2025.3 |
+>
+> Genuinely absent, still: PETSc, hypre, KLU/SuiteSparse, SuperLU_MT,
+> Trilinos, Ginkgo, RAJA, Kokkos. A CUDA toolkit (v13.0) is also present.
+>
+> **Consequence: the failure counts below understate what this machine can
+> build.** With oneMKL the four `*L` examples can link real LAPACK instead of
+> the documented substitution, and with Intel MPI the 34 files that failed on
+> a missing `mpi.h` can at least be attempted (the 5 PETSc ones would still
+> fail on PETSc). Rebuilding with those enabled has **not** been done yet, so
+> every "missing header" row below remains an accurate record of *this* build
+> — it is just not the best this machine could do.
+
 ## Directories outside the comparison
 
 Every one needs a backend present on neither side. Counts are C source files.

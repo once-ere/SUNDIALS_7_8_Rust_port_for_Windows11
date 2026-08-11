@@ -306,11 +306,16 @@ published results and a native C build cannot.
 
 ## Known limits of this evidence
 
-* 62 of the 180 C examples cannot be built on this machine: MS-MPI, PETSc,
-  hypre, KLU, SuperLU_MT and LAPACK are not installed, and MSVC does not
-  implement OpenMP device offload. Each one's compiler error is recorded in
+* 62 of the 180 C examples did not build **in this build**. Each one's
+  compiler error is recorded in
   `c-results/provenance/31-build-each-example.txt` — these are measured
-  failures, not assumptions.
+  failures. But note the build did not use everything this machine has:
+  Intel oneAPI is installed and supplies **oneMKL** (LAPACK), **Intel MPI**
+  (`mpi.h`, `mpiexec`) and **`ifx`** (Fortran). An earlier revision of this
+  document wrongly listed all three as absent. Rebuilding with them enabled
+  would let the 34 `mpi.h` failures and the 4 LAPACK ones be attempted
+  properly; that has not been done yet. PETSc, hypre, KLU/SuiteSparse and
+  SuperLU_MT are genuinely absent.
 * 10 examples build and run on the C side but have **no Rust counterpart**,
   because the port has no `nvector_openmp` or `nvector_manyvector`. Those two
   vector implementations, and then the 10 example translations, are what
