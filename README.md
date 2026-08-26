@@ -77,7 +77,7 @@ or MSYS2, not `cmd.exe` or PowerShell — and it needs the read-only upstream
 SUNDIALS 7.8.0 C tree, which this workspace does *not* sit inside:
 
 ```bash
-SUNDIALS_C_TREE=/c/Users/nsh/Developer/sundials-7.8.0 tools/verify_examples.sh all
+SUNDIALS_C_TREE=/c/Users/youruser/Developer/sundials-7.8.0 tools/verify_examples.sh all
 ```
 
 ## Platform scope
